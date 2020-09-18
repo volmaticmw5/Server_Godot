@@ -1,0 +1,16 @@
+{
+  "Type": "Authentication",
+  "Port": 55000,
+  "MaxPlayers": 2500,
+  "Tick": 50,
+  "DatabaseHost": "127.0.0.1",
+  "DatabasePort": 3306,
+  "DatabaseUser": "root",
+  "DatabasePassword": "Aronstone17",
+  "DatabaseDefault": "account",
+  "DatabaseTick": 100,
+  "DatabasePoolSize": 3,
+  "DatabaseAccountDb": "account",
+  "DatabasePlayerDb": "player",
+  "DatabaseLogDb": "log"
+}
