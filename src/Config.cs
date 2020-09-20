@@ -11,6 +11,15 @@ enum ServerTypes
     Game
 }
 
+struct GameServer
+{
+    public string label;
+    public string addr;
+    public int port;
+    public int[] maps;
+    public int toAuthServer;
+}
+
 class ConfigStructure
 {
     public ServerTypes Type;
@@ -27,6 +36,7 @@ class ConfigStructure
     public string DatabaseAccountDb;
     public string DatabasePlayerDb;
     public string DatabaseLogDb;
+    public GameServer[] GameServers;
 }
 
 class Config
@@ -45,6 +55,7 @@ class Config
     public static string DatabaseAccountDb;
     public static string DatabasePlayerDb;
     public static string DatabaseLogDb;
+    public static GameServer[] GameServers;
 
     public static int ReadConfig()
     {
@@ -70,6 +81,11 @@ class Config
                     DatabaseAccountDb = json.DatabaseAccountDb;
                     DatabasePlayerDb = json.DatabasePlayerDb;
                     DatabaseLogDb = json.DatabaseLogDb;
+                    try
+                    {
+                        GameServers = json.GameServers;
+                    }
+                    catch { }
                     return 0;
                 }catch(Exception e)
                 {

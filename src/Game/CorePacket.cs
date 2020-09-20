@@ -1,36 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Text;
 
-class AuthPacket
+class CorePacket
 {
 	public Packet packet;
 
-	public AuthPacket(byte[] bytes)
+	public CorePacket(byte[] bytes)
 	{
 		packet = new Packet(bytes);
 	}
 
-	public AuthPacket()
+	public CorePacket()
 	{
 		packet = new Packet();
 	}
 
 	public enum ServerPackets
 	{
-		connectSucess,
-		requestAuth,
-		authResult,
-		charSelection,
-		goToServerAt
+		identifyoself,
 	}
 
 	/// <summary>Sent from client to server.</summary>
 	public enum ClientPackets
 	{
-		pong,
-		authenticate,
-		enterMap,
+		itsme,
 	}
 }

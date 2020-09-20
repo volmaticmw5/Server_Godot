@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-class AuthClient
+class Client
 {
     private int cid;
     private static readonly int buffer_size = 524;
-    private AuthTCP _tcp;
+    private TCP _tcp;
     private int aid;
     private int session_id;
 
-    public AuthClient(int cid)
+    public Client(int cid)
     {
         this.cid = cid;
-        this._tcp = new AuthTCP(this, this.cid);
+        this._tcp = new TCP(this, this.cid);
         this.session_id = -1;
     }
 
-    public AuthTCP getTcp()
+    public TCP getTcp()
     {
         return this._tcp;
     }
@@ -43,16 +43,16 @@ class AuthClient
         this.session_id = val;
     }
 
-    public class AuthTCP
+    public class TCP
     {
-        private AuthClient client;
+        private Client client;
         public TcpClient socket;
         private readonly int cid;
         private NetworkStream stream;
-        private AuthPacket receivedPacket;
+        private CorePacket receivedPacket;
         private byte[] receivedBuff;
 
-        public AuthTCP(AuthClient _client, int _cid)
+        public TCP(Client _client, int _cid)
         {
             this.client = _client;
             this.cid = _cid;
@@ -68,7 +68,7 @@ class AuthClient
             }
             catch { }
 
-            if(socket != null)
+            if (socket != null)
                 socket.Close();
 
             stream = null;
@@ -85,24 +85,18 @@ class AuthClient
 
             stream = socket.GetStream();
 
-            receivedPacket = new AuthPacket();
+            receivedPacket = new CorePacket();
             receivedBuff = new byte[buffer_size];
 
             stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
 
-            /*
-             *
-             * A new client has connected to the authentication server
-             * This is NOT an authentication request, its just a heartbeat 
-             * If we hear back a valid PONG response then we "allow" the client to request authentication
-             */
-            using (Packet newPacket = new Packet((int)AuthPacket.ServerPackets.connectSucess))
+            // Ask the client for a session id 
+            using (Packet newPacket = new Packet((int)CorePacket.ServerPackets.identifyoself))
             {
-                newPacket.Write("Ping?");
                 newPacket.Write(cid);
-                AuthCore.SendTCPData(cid, newPacket);
+                Core.SendTCPData(cid, newPacket);
             }
-            try { Logger.Syslog($"Client #{client.cid} ({AuthCore.GetClientIP(cid)}) connected to the authentication server"); } catch { Logger.Syslog("A client connected to the authentication server but we couldn't retrieve it's ip address."); }
+            try { Logger.Syslog($"Client #{client.cid} ({Core.GetClientIP(cid)}) connected to the server"); } catch { Logger.Syslog("A client connected to the server but we couldn't retrieve it's ip address."); }
         }
 
         public void SendData(Packet packet)
@@ -132,7 +126,7 @@ class AuthClient
 
                 if (byteLength <= 0)
                 {
-                    AuthCore.Clients[cid]._tcp.Disconnect();
+                    Core.Clients[cid]._tcp.Disconnect();
                     return;
                 }
 
@@ -144,7 +138,7 @@ class AuthClient
             }
             catch (Exception ex)
             {
-                AuthCore.Clients[cid]._tcp.Disconnect();
+                Core.Clients[cid]._tcp.Disconnect();
             }
         }
 
@@ -163,16 +157,16 @@ class AuthClient
             {
                 byte[] packetBytes = receivedPacket.packet.ReadBytes(packetLength);
 
-                AuthPacket authPacket = new AuthPacket(packetBytes);
-                int packetId = authPacket.packet.ReadInt();
+                CorePacket packet = new CorePacket(packetBytes);
+                int packetId = packet.packet.ReadInt();
 
-                // Authentication packets
+                // Packets
                 // We can handle different packets on different threads using the threadManager!
-                if (AuthCore.packet_handlers.ContainsKey(packetId))
+                if (Core.main_thread_packets.ContainsKey(packetId))
                 {
                     ThreadManager.ExecuteOnMainThread(() =>
                     {
-                        AuthCore.packet_handlers[packetId](cid, authPacket.packet);
+                        Core.main_thread_packets[packetId](cid, packet.packet);
                     });
                 }
                 else

@@ -40,7 +40,7 @@ public class Security
             }
         }
 
-        Logger.Syslog($"Invalid client id on a packet received, disconnecting client #{fromClient}");
+        Logger.Syslog($"Failed to validate client, disconnecting client #{fromClient}");
         AuthCore.Clients[fromClient].getTcp().Disconnect();
         return false;
     }

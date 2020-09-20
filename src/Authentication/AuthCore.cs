@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -48,6 +49,7 @@ class AuthCore
 		{
 			{(int)AuthPacket.ClientPackets.pong, HandlePong },
 			{(int)AuthPacket.ClientPackets.authenticate, Authenticate },
+			{(int)AuthPacket.ClientPackets.enterMap, EnterMap },
 		};
 	}
 
@@ -149,10 +151,15 @@ class AuthCore
 			data += pid + ";" + name + "/end/";
 		}
 
+		// Set session id
 		Random rnd1 = new Random((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds);
 		Random rnd2 = new Random(rnd1.Next(1, Int32.MaxValue));
 		int nSessionId = rnd2.Next(1, Int32.MaxValue);
 		Clients[client].setSessionId(nSessionId);
+
+		// Set accound id
+		Int32.TryParse(result.Rows[1]["aid"].ToString(), out int aid);
+		Clients[client].setAID(aid);
 
 		using (Packet packet = new Packet((int)AuthPacket.ServerPackets.charSelection))
 		{
@@ -160,6 +167,81 @@ class AuthCore
 			packet.Write(nSessionId);
 			packet.Write(data);
 			AuthCore.SendTCPData(client, packet);
+		}
+	}
+
+	private void EnterMap(int fromClient, Packet packet)
+	{
+		int cid = packet.ReadInt();
+		int sid = packet.ReadInt();
+		int pid = packet.ReadInt();
+
+		if(Security.ValidatePacket(cid, fromClient, sid))
+		{
+			List<MySqlParameter> _params = new List<MySqlParameter>()
+			{
+				MySQL_Param.Parameter("?id", pid),
+			};
+			Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `id`=?id LIMIT 1", _params, fromClient, HandleEnterMapPidCheck);
+		}
+	}
+
+	private void HandleEnterMapPidCheck(int client, DataTable result)
+	{
+		if (result.Rows.Count == 0)
+			Clients[client].getTcp().Disconnect();
+
+		Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
+		Int32.TryParse(result.Rows[0]["id"].ToString(), out int pid);
+		if (aid <= 0 || pid < 0)
+			Clients[client].getTcp().Disconnect();
+
+		if(Clients[client].getAID() == aid)
+		{
+			Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
+			float.TryParse(result.Rows[0]["x"].ToString(), out float x);
+			float.TryParse(result.Rows[0]["y"].ToString(), out float y);
+			float.TryParse(result.Rows[0]["z"].ToString(), out float z);
+
+			// Get the appropriate server for the client
+			foreach (GameServer server in Config.GameServers)
+			{
+				if(server.maps.Contains(map))
+				{
+					// Insert a new session onto the database
+					List<MySqlParameter> _params = new List<MySqlParameter>()
+					{
+						MySQL_Param.Parameter("?session", Clients[client].getSessionId()),
+						MySQL_Param.Parameter("?pid", pid),
+						MySQL_Param.Parameter("?aid", aid)
+					};
+					Server.DB.AddQueryToQeue("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", _params, client);
+
+					// Send a packet to the client telling it to connect to this game server
+					using (Packet packet = new Packet((int)AuthPacket.ServerPackets.goToServerAt))
+					{
+						packet.Write(client);
+						packet.Write(Clients[client].getSessionId());
+						packet.Write(server.addr);
+						packet.Write(server.port);
+						SendTCPData(client, packet);
+					}
+
+					Logger.Syslog($"Client #{client} is entering map #{map} ({x},{y},{z}) on the server labeled '{server.label}' with pid #{pid} with a session id of {Clients[client].getSessionId()}...");
+					break;
+				}
+				else
+				{
+					Logger.Syslog($"[ALERT] Client #{client} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
+					Clients[client].getTcp().Disconnect();
+					return;
+				}
+			}
+		}
+		else
+		{
+			Logger.Syslog($"[ALERT] Client #{client} attempted to enter a character of pid {pid} but he doesn't own it! AID missmatch (is #{aid} but we were looking for {Clients[client].getAID()} !!!");
+			Clients[client].getTcp().Disconnect();
 		}
 	}
 }
