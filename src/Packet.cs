@@ -5,6 +5,27 @@ using System.Text;
 
 public class Packet : IDisposable
 {
+	public enum ServerPackets
+	{
+		connectSucess,
+		requestAuth,
+		authResult,
+		charSelection,
+		goToServerAt,
+		identifyoself,
+		warpTo,
+		alreadyConnected
+	}
+
+	/// <summary>Sent from client to server.</summary>
+	public enum ClientPackets
+	{
+		pong,
+		authenticate,
+		enterMap,
+		itsme,
+	}
+
 	private List<byte> buffer;
 	private byte[] readableBuffer;
 	private int readPos;

@@ -49,7 +49,7 @@ class AuthClient
         public TcpClient socket;
         private readonly int cid;
         private NetworkStream stream;
-        private AuthPacket receivedPacket;
+        private Packet receivedPacket;
         private byte[] receivedBuff;
 
         public AuthTCP(AuthClient _client, int _cid)
@@ -85,7 +85,7 @@ class AuthClient
 
             stream = socket.GetStream();
 
-            receivedPacket = new AuthPacket();
+            receivedPacket = new Packet();
             receivedBuff = new byte[buffer_size];
 
             stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
@@ -96,7 +96,7 @@ class AuthClient
              * This is NOT an authentication request, its just a heartbeat 
              * If we hear back a valid PONG response then we "allow" the client to request authentication
              */
-            using (Packet newPacket = new Packet((int)AuthPacket.ServerPackets.connectSucess))
+            using (Packet newPacket = new Packet((int)Packet.ServerPackets.connectSucess))
             {
                 newPacket.Write("Ping?");
                 newPacket.Write(cid);
@@ -138,7 +138,7 @@ class AuthClient
 
                 byte[] data = new byte[byteLength];
                 Array.Copy(receivedBuff, data, byteLength);
-                receivedPacket.packet.Reset(HandleData(data));
+                receivedPacket.Reset(HandleData(data));
 
                 stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
             }
@@ -151,20 +151,20 @@ class AuthClient
         private bool HandleData(byte[] data)
         {
             int packetLength = 0;
-            receivedPacket.packet.SetBytes(data);
-            if (receivedPacket.packet.UnreadLength() >= 4)
+            receivedPacket.SetBytes(data);
+            if (receivedPacket.UnreadLength() >= 4)
             {
-                packetLength = receivedPacket.packet.ReadInt();
+                packetLength = receivedPacket.ReadInt();
                 if (packetLength <= 0)
                     return true;
             }
 
-            while (packetLength > 0 && packetLength <= receivedPacket.packet.UnreadLength())
+            while (packetLength > 0 && packetLength <= receivedPacket.UnreadLength())
             {
-                byte[] packetBytes = receivedPacket.packet.ReadBytes(packetLength);
+                byte[] packetBytes = receivedPacket.ReadBytes(packetLength);
 
-                AuthPacket authPacket = new AuthPacket(packetBytes);
-                int packetId = authPacket.packet.ReadInt();
+                Packet authPacket = new Packet(packetBytes);
+                int packetId = authPacket.ReadInt();
 
                 // Authentication packets
                 // We can handle different packets on different threads using the threadManager!
@@ -172,7 +172,7 @@ class AuthClient
                 {
                     ThreadManager.ExecuteOnMainThread(() =>
                     {
-                        AuthCore.packet_handlers[packetId](cid, authPacket.packet);
+                        AuthCore.packet_handlers[packetId](cid, authPacket);
                     });
                 }
                 else
@@ -182,9 +182,9 @@ class AuthClient
 
 
                 packetLength = 0;
-                if (receivedPacket.packet.UnreadLength() >= 4)
+                if (receivedPacket.UnreadLength() >= 4)
                 {
-                    packetLength = receivedPacket.packet.ReadInt();
+                    packetLength = receivedPacket.ReadInt();
                     if (packetLength <= 0)
                         return true;
                 }

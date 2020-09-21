@@ -47,9 +47,9 @@ class AuthCore
 
 		packet_handlers = new Dictionary<int, PacketHandler>()
 		{
-			{(int)AuthPacket.ClientPackets.pong, HandlePong },
-			{(int)AuthPacket.ClientPackets.authenticate, Authenticate },
-			{(int)AuthPacket.ClientPackets.enterMap, EnterMap },
+			{(int)Packet.ClientPackets.pong, HandlePong },
+			{(int)Packet.ClientPackets.authenticate, Authenticate },
+			{(int)Packet.ClientPackets.enterMap, EnterMap },
 		};
 	}
 
@@ -83,7 +83,7 @@ class AuthCore
 			if (Security.Verify(pong, hashed))
 			{
 				// This client is valid, ask it for the authentication data
-				using (Packet newPacket = new Packet((int)AuthPacket.ServerPackets.requestAuth))
+				using (Packet newPacket = new Packet((int)Packet.ServerPackets.requestAuth))
 				{
 					newPacket.Write(fromClient);
 					AuthCore.SendTCPData(fromClient, newPacket);
@@ -122,18 +122,83 @@ class AuthCore
 		if(aid <= 0)
 			SendAuthFailed(client);
 
-		// Get characters
-		List<MySqlParameter> _params = new List<MySqlParameter>()
+		// Check sessions
+		List<MySqlParameter> __params = new List<MySqlParameter>()
 		{
-			MySQL_Param.Parameter("?id", aid),
-			MySQL_Param.Parameter("?max", 8) // Max characters in account
+			MySQL_Param.Parameter("?aid", aid),
 		};
-		Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `aid`=?id LIMIT ?max", _params, client, CharactersInAccount);
+		DataTable rows = Server.DB.QuerySync("SELECT COUNT(*) AS `count` FROM [[player]].sessions WHERE `aid`=?aid LIMIT 1", __params);
+		Int32.TryParse(rows.Rows[0]["count"].ToString(), out int count);
+		if (count == 0)
+		{
+			bool exists = false;
+			foreach (KeyValuePair<int, AuthClient> cl in Clients)
+			{
+				if (cl.Value.getAID() == aid)
+				{
+					using (Packet newPacket = new Packet((int)Packet.ServerPackets.alreadyConnected))
+					{
+						newPacket.Write(client);
+						AuthCore.SendTCPData(client, newPacket);
+					}
+					exists = true;
+					break;
+				}
+			}
+
+			if(!exists)
+			{
+				// Get characters
+				List<MySqlParameter> _params = new List<MySqlParameter>()
+				{
+					MySQL_Param.Parameter("?id", aid),
+					MySQL_Param.Parameter("?max", 8) // Max characters in account
+				};
+				Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `aid`=?id LIMIT ?max", _params, client, CharactersInAccount);
+			}
+		}
+		else
+		{
+			using (Packet newPacket = new Packet((int)Packet.ServerPackets.alreadyConnected))
+			{
+				newPacket.Write(client);
+				AuthCore.SendTCPData(client, newPacket);
+			}
+
+			// Check if there's any client connected with this session id, if there is, tell it to disconnect and then delete from db.
+			// if there isn't one, delete from database
+			bool isOnline = false;
+			foreach (KeyValuePair<int, AuthClient> c in Clients)
+			{
+				if(c.Value.getTcp() != null && c.Value != Clients[client])
+				{
+					if(c.Value.getTcp().socket != null)
+					{
+						if(c.Value.getTcp().socket.Connected)
+						{
+							isOnline = true;
+							// send a disconnect packet
+							
+							break;
+						}
+					}
+				}
+			}
+
+			if(!isOnline)
+			{
+				List<MySqlParameter> _params = new List<MySqlParameter>()
+				{
+					MySQL_Param.Parameter("?id", aid),
+				};
+				Server.DB.AddQueryToQeue("DELETE FROM [[player]].sessions WHERE `aid`=?id LIMIT 1", _params, client);
+			}
+		}
 	}
 
 	private void SendAuthFailed(int client)
 	{
-		using (Packet newPacket = new Packet((int)AuthPacket.ServerPackets.authResult))
+		using (Packet newPacket = new Packet((int)Packet.ServerPackets.authResult))
 		{
 			newPacket.Write(client);
 			newPacket.Write(false);
@@ -161,7 +226,7 @@ class AuthCore
 		Int32.TryParse(result.Rows[1]["aid"].ToString(), out int aid);
 		Clients[client].setAID(aid);
 
-		using (Packet packet = new Packet((int)AuthPacket.ServerPackets.charSelection))
+		using (Packet packet = new Packet((int)Packet.ServerPackets.charSelection))
 		{
 			packet.Write(client);
 			packet.Write(nSessionId);
@@ -215,10 +280,10 @@ class AuthCore
 						MySQL_Param.Parameter("?pid", pid),
 						MySQL_Param.Parameter("?aid", aid)
 					};
-					Server.DB.AddQueryToQeue("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", _params, client);
+					Server.DB.QuerySync("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", _params);
 
 					// Send a packet to the client telling it to connect to this game server
-					using (Packet packet = new Packet((int)AuthPacket.ServerPackets.goToServerAt))
+					using (Packet packet = new Packet((int)Packet.ServerPackets.goToServerAt))
 					{
 						packet.Write(client);
 						packet.Write(Clients[client].getSessionId());

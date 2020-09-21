@@ -1,6 +1,6 @@
 {
-  "Type": "Authentication",
-  "Port": 55000,
+  "Type": "Game",
+  "Port": 55001,
   "MaxPlayers": 2500,
   "Tick": 50,
   "DatabaseHost": "127.0.0.1",
@@ -19,15 +19,13 @@
     {
       "label": "Game Server 1",
       "addr": "127.0.0.1",
-      "port": 50001,
-      "toAuthServer":  51001,
+      "port": 55001,
       "maps": [ 1, 2, 3, 4 ]
     },
     {
       "label": "Game Server 2",
       "addr": "127.0.0.1",
-      "port": 50002,
-      "toAuthServer": 51002,
+      "port": 55002,
       "maps": [ 5, 6, 7 ]
     }
   ]

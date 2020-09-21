@@ -25,18 +25,11 @@ class Server
             return;
         }
 
-        // Initialize threads
-        List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain(), () => ThreadManager.UpdateMain() };
-        mainThread = new Thread(new ThreadStart(() => ThreadedWork(mainThreadActions, "Main", Config.Tick)));
-        mainThread.Start();
-
         switch (Config.Type)
         {
             case ServerTypes.Authentication:
-                // Start the core
+                Logger.Syslog($"Starting {ServerTypes.Authentication.ToString()} server...");
                 AuthCore auth_core = new AuthCore();
-
-                // Print something
                 Logger.Syslog($"{ServerTypes.Authentication.ToString()} server started on port {Config.Port}");
 
                 break;
@@ -44,9 +37,16 @@ class Server
 
                 break;
             case ServerTypes.Game:
-
+                Logger.Syslog($"Starting {ServerTypes.Game.ToString()} server...");
+                Core the_core = new Core();
+                Logger.Syslog($"{ServerTypes.Game.ToString()} server started on port {Config.Port}");
                 break;
         }
+
+        // Initialize threads
+        List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain(), () => ThreadManager.UpdateMain() };
+        mainThread = new Thread(new ThreadStart(() => ThreadedWork(mainThreadActions, "Main", Config.Tick)));
+        mainThread.Start();
     }
 
     private static void ThreadedWork(List<Action> actions, string threadName, int msTick)

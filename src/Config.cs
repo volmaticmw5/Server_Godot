@@ -17,7 +17,6 @@ struct GameServer
     public string addr;
     public int port;
     public int[] maps;
-    public int toAuthServer;
 }
 
 class ConfigStructure

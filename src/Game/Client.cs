@@ -8,8 +8,8 @@ class Client
     private int cid;
     private static readonly int buffer_size = 524;
     private TCP _tcp;
-    private int aid;
     private int session_id;
+    private Player player;
 
     public Client(int cid)
     {
@@ -18,29 +18,24 @@ class Client
         this.session_id = -1;
     }
 
+    public Player getPlayer()
+    {
+        return this.player;
+    }
+
+    public int getClientId()
+    {
+        return this.cid;
+    }
+
+    public void setPlayer(Player player)
+    {
+        this.player = player;
+    }
+
     public TCP getTcp()
     {
         return this._tcp;
-    }
-
-    public int getAID()
-    {
-        return this.aid;
-    }
-
-    public void setAID(int val)
-    {
-        this.aid = val;
-    }
-
-    public int getSessionId()
-    {
-        return this.session_id;
-    }
-
-    public void setSessionId(int val)
-    {
-        this.session_id = val;
     }
 
     public class TCP
@@ -49,7 +44,7 @@ class Client
         public TcpClient socket;
         private readonly int cid;
         private NetworkStream stream;
-        private CorePacket receivedPacket;
+        private Packet receivedPacket;
         private byte[] receivedBuff;
 
         public TCP(Client _client, int _cid)
@@ -58,13 +53,11 @@ class Client
             this.cid = _cid;
         }
 
-        public void Disconnect()
+        public void Disconnect(int errCode = -1)
         {
             try
             {
-                Logger.Syslog($"Client #{client.cid} disconnected ({client.getTcp().socket.Client.RemoteEndPoint.ToString()})");
-                client.setSessionId(-1);
-                client.setAID(-1);
+                Logger.Syslog($"Client #{client.cid} disconnected ({client.getTcp().socket.Client.RemoteEndPoint.ToString()}) Code #{errCode.ToString()}");
             }
             catch { }
 
@@ -85,13 +78,13 @@ class Client
 
             stream = socket.GetStream();
 
-            receivedPacket = new CorePacket();
+            receivedPacket = new Packet();
             receivedBuff = new byte[buffer_size];
 
             stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
 
             // Ask the client for a session id 
-            using (Packet newPacket = new Packet((int)CorePacket.ServerPackets.identifyoself))
+            using (Packet newPacket = new Packet((int)Packet.ServerPackets.identifyoself))
             {
                 newPacket.Write(cid);
                 Core.SendTCPData(cid, newPacket);
@@ -126,39 +119,39 @@ class Client
 
                 if (byteLength <= 0)
                 {
-                    Core.Clients[cid]._tcp.Disconnect();
+                    Core.Clients[cid]._tcp.Disconnect(0);
                     return;
                 }
 
                 byte[] data = new byte[byteLength];
                 Array.Copy(receivedBuff, data, byteLength);
-                receivedPacket.packet.Reset(HandleData(data));
+                receivedPacket.Reset(HandleData(data));
 
                 stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
             }
             catch (Exception ex)
             {
-                Core.Clients[cid]._tcp.Disconnect();
+                Core.Clients[cid]._tcp.Disconnect(1);
             }
         }
 
         private bool HandleData(byte[] data)
         {
             int packetLength = 0;
-            receivedPacket.packet.SetBytes(data);
-            if (receivedPacket.packet.UnreadLength() >= 4)
+            receivedPacket.SetBytes(data);
+            if (receivedPacket.UnreadLength() >= 4)
             {
-                packetLength = receivedPacket.packet.ReadInt();
+                packetLength = receivedPacket.ReadInt();
                 if (packetLength <= 0)
                     return true;
             }
 
-            while (packetLength > 0 && packetLength <= receivedPacket.packet.UnreadLength())
+            while (packetLength > 0 && packetLength <= receivedPacket.UnreadLength())
             {
-                byte[] packetBytes = receivedPacket.packet.ReadBytes(packetLength);
+                byte[] packetBytes = receivedPacket.ReadBytes(packetLength);
 
-                CorePacket packet = new CorePacket(packetBytes);
-                int packetId = packet.packet.ReadInt();
+                Packet packet = new Packet(packetBytes);
+                int packetId = packet.ReadInt();
 
                 // Packets
                 // We can handle different packets on different threads using the threadManager!
@@ -166,7 +159,7 @@ class Client
                 {
                     ThreadManager.ExecuteOnMainThread(() =>
                     {
-                        Core.main_thread_packets[packetId](cid, packet.packet);
+                        Core.main_thread_packets[packetId](cid, packet);
                     });
                 }
                 else
@@ -176,9 +169,9 @@ class Client
 
 
                 packetLength = 0;
-                if (receivedPacket.packet.UnreadLength() >= 4)
+                if (receivedPacket.UnreadLength() >= 4)
                 {
-                    packetLength = receivedPacket.packet.ReadInt();
+                    packetLength = receivedPacket.ReadInt();
                     if (packetLength <= 0)
                         return true;
                 }
