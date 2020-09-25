@@ -68,7 +68,7 @@ class Core
 		return Clients[clientId].getTcp().socket.Client.RemoteEndPoint.ToString();
 	}
 
-	private void ItsMe(int fromClient, Packet packet)
+	private async void ItsMe(int fromClient, Packet packet)
 	{
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
@@ -80,65 +80,61 @@ class Core
 			{
 				MySQL_Param.Parameter("?session", sid),
 			};
-			Server.DB.AddQueryToQeue("SELECT * FROM [[player]].sessions WHERE `session`=?session LIMIT 1", _params, fromClient, HandleItsMe);
-		}
-		else
-		{
-			Clients[fromClient].getTcp().Disconnect(2);
-		}
-		
-	}
 
-	private void HandleItsMe(int client, DataTable result)
-	{
-		if(result.Rows.Count == 0)
-		{
-			Clients[client].getTcp().Disconnect(3);
-			return;
-		}
+			DataTable result = await Server.DB.QueryAsync("SELECT * FROM [[player]].sessions WHERE `session`=?session LIMIT 1", _params);
+			if (result.Rows.Count == 0)
+			{
+				Clients[fromClient].getTcp().Disconnect(3);
+				return;
+			}
 
-		Int32.TryParse(result.Rows[0]["session"].ToString(), out int sid);
-		Int32.TryParse(result.Rows[0]["pid"].ToString(), out int pid);
-		Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
+			Int32.TryParse(result.Rows[0]["pid"].ToString(), out int pid);
+			Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
+			Int32.TryParse(result.Rows[0]["sex"].ToString(), out int sex);
+			Int32.TryParse(result.Rows[0]["race"].ToString(), out int race);
 
-		Player player = new Player(Clients[client], sid, pid, aid);
-		Clients[client].setPlayer(player);
-		List<MySqlParameter> _params = new List<MySqlParameter>()
+			Player player = new Player(Clients[fromClient], sid, pid, aid, (Player.Sexes)sex, (Player.Races)race);
+			Clients[fromClient].setPlayer(player);
+			List<MySqlParameter> __params = new List<MySqlParameter>()
 			{
 				MySQL_Param.Parameter("?pid", pid),
 				MySQL_Param.Parameter("?aid", aid),
 			};
-		Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `id`=?pid AND `aid`=?aid LIMIT 1", _params, client, HandleCharResult);
-	}
+			DataTable rows = await Server.DB.QueryAsync("SELECT * FROM [[player]].player WHERE `id`=?pid AND `aid`=?aid LIMIT 1", __params);
 
-	private void HandleCharResult(int client, DataTable result)
-	{
-		if (result.Rows.Count == 0)
-		{
-			Clients[client].getTcp().Disconnect(4);
-			return;
+			if (rows.Rows.Count == 0)
+			{
+				Clients[fromClient].getTcp().Disconnect(4);
+				return;
+			}
+
+			float.TryParse(rows.Rows[0]["x"].ToString(), out float x);
+			float.TryParse(rows.Rows[0]["y"].ToString(), out float y);
+			float.TryParse(rows.Rows[0]["z"].ToString(), out float z);
+			Int32.TryParse(rows.Rows[0]["map"].ToString(), out int map);
+
+			Clients[fromClient].getPlayer().name = rows.Rows[0]["name"].ToString();
+			Clients[fromClient].getPlayer().map = map;
+			Clients[fromClient].getPlayer().pos = new System.Numerics.Vector3(x, y, z);
+
+			// By now the player has been created, lets tell the client to load target map with target player at target position!
+			System.Numerics.Vector3 pos = Clients[fromClient].getPlayer().pos;
+			string name = Clients[fromClient].getPlayer().name;
+			using (Packet pck = new Packet((int)Packet.ServerPackets.warpTo))
+			{
+				pck.Write(fromClient); // Cid
+				pck.Write(map); // map index
+				pck.Write(pos); // vec3 pos
+				pck.Write(name); // name
+				pck.Write(sex); // sex
+				pck.Write(race); // race
+
+				SendTCPData(fromClient, pck);
+			}
 		}
-
-		float.TryParse(result.Rows[0]["x"].ToString(), out float x);
-		float.TryParse(result.Rows[0]["y"].ToString(), out float y);
-		float.TryParse(result.Rows[0]["z"].ToString(), out float z);
-		Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
-
-		Clients[client].getPlayer().setName(result.Rows[0]["name"].ToString());
-		Clients[client].getPlayer().setMap(map);
-		Clients[client].getPlayer().setPos(new System.Numerics.Vector3(x, y, z));
-
-		// By now the player has been created, lets tell the client to load target map with target player at target position!
-		System.Numerics.Vector3 pos = Clients[client].getPlayer().getPos();
-		string name = Clients[client].getPlayer().getName();
-		using (Packet pck = new Packet((int)Packet.ServerPackets.warpTo))
+		else
 		{
-			pck.Write(client); // Cid
-			pck.Write(map); // map index
-			pck.Write(pos); // vec3 pos
-			pck.Write(name); // name
-
-			SendTCPData(client, pck);
+			Clients[fromClient].getTcp().Disconnect(2);
 		}
 	}
 }

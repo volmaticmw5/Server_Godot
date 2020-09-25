@@ -97,7 +97,7 @@ class AuthCore
 		}
 	}
 
-	private void Authenticate(int fromClient, Packet packet)
+	private async void Authenticate(int fromClient, Packet packet)
 	{
 		int id = packet.ReadInt();
 		string user = packet.ReadString();
@@ -109,89 +109,103 @@ class AuthCore
 				MySQL_Param.Parameter("?login", user),
 				MySQL_Param.Parameter("?password", password),
 			};
-			Server.DB.AddQueryToQeue("SELECT `id` FROM [[account]].account WHERE `login`=?login AND `password`=?password LIMIT 1", _params, id, HandleAuthResultFromDatabase);
-		}
-	}
+			DataTable result = await Server.DB.QueryAsync("SELECT `id` FROM [[account]].account WHERE `login`=?login AND `password`=?password LIMIT 1", _params);
+			if (result.Rows.Count == 0)
+				SendAuthFailed(fromClient);
 
-	private void HandleAuthResultFromDatabase(int client, DataTable result)
-	{
-		if(result.Rows.Count == 0)
-			SendAuthFailed(client);
+			Int32.TryParse(result.Rows[0]["id"].ToString(), out int aid);
+			if (aid <= 0)
+				SendAuthFailed(fromClient);
 
-		Int32.TryParse(result.Rows[0]["id"].ToString(), out int aid);
-		if(aid <= 0)
-			SendAuthFailed(client);
-
-		// Check sessions
-		List<MySqlParameter> __params = new List<MySqlParameter>()
-		{
-			MySQL_Param.Parameter("?aid", aid),
-		};
-		DataTable rows = Server.DB.QuerySync("SELECT COUNT(*) AS `count` FROM [[player]].sessions WHERE `aid`=?aid LIMIT 1", __params);
-		Int32.TryParse(rows.Rows[0]["count"].ToString(), out int count);
-		if (count == 0)
-		{
-			bool exists = false;
-			foreach (KeyValuePair<int, AuthClient> cl in Clients)
+			// Check sessions
+			List<MySqlParameter> __params = new List<MySqlParameter>()
 			{
-				if (cl.Value.getAID() == aid)
-				{
-					using (Packet newPacket = new Packet((int)Packet.ServerPackets.alreadyConnected))
-					{
-						newPacket.Write(client);
-						AuthCore.SendTCPData(client, newPacket);
-					}
-					exists = true;
-					break;
-				}
-			}
-
-			if(!exists)
+				MySQL_Param.Parameter("?aid", aid),
+			};
+			DataTable rows = await Server.DB.QueryAsync("SELECT COUNT(*) AS `count` FROM [[player]].sessions WHERE `aid`=?aid LIMIT 1", __params);
+			Int32.TryParse(rows.Rows[0]["count"].ToString(), out int count);
+			if (count == 0)
 			{
 				// Get characters
-				List<MySqlParameter> _params = new List<MySqlParameter>()
+				List<MySqlParameter> charParam = new List<MySqlParameter>()
 				{
 					MySQL_Param.Parameter("?id", aid),
 					MySQL_Param.Parameter("?max", 8) // Max characters in account
 				};
-				Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `aid`=?id LIMIT ?max", _params, client, CharactersInAccount);
-			}
-		}
-		else
-		{
-			using (Packet newPacket = new Packet((int)Packet.ServerPackets.alreadyConnected))
-			{
-				newPacket.Write(client);
-				AuthCore.SendTCPData(client, newPacket);
-			}
+				DataTable charRows = await Server.DB.QueryAsync("SELECT * FROM [[player]].player WHERE `aid`=?id LIMIT ?max", charParam);
 
-			// Check if there's any client connected with this session id, if there is, tell it to disconnect and then delete from db.
-			// if there isn't one, delete from database
-			bool isOnline = false;
-			foreach (KeyValuePair<int, AuthClient> c in Clients)
-			{
-				if(c.Value.getTcp() != null && c.Value != Clients[client])
+				// Send character data
+				string data = "";
+				for (int i = 0; i < charRows.Rows.Count; i++)
 				{
-					if(c.Value.getTcp().socket != null)
+					string pid = charRows.Rows[i]["id"].ToString();
+					string name = charRows.Rows[i]["name"].ToString();
+					data += pid + ";" + name + "/end/";
+				}
+
+				// Set session id
+				Random rnd1 = new Random((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds);
+				Random rnd2 = new Random(rnd1.Next(1, Int32.MaxValue));
+				int nSessionId = rnd2.Next(1, Int32.MaxValue);
+				Clients[fromClient].setSessionId(nSessionId);
+
+				// Set accound id
+				Clients[fromClient].setAID(aid);
+
+				// Create session
+				List<MySqlParameter> sessParams = new List<MySqlParameter>()
+				{
+					MySQL_Param.Parameter("?session", Clients[fromClient].getSessionId()),
+					MySQL_Param.Parameter("?pid", -1), // temporary pid
+					MySQL_Param.Parameter("?aid", aid)
+				};
+				await Server.DB.QueryAsync("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", sessParams);
+
+				// Send it
+				using (Packet nPacket = new Packet((int)Packet.ServerPackets.charSelection))
+				{
+					nPacket.Write(fromClient);
+					nPacket.Write(nSessionId);
+					nPacket.Write(data);
+					AuthCore.SendTCPData(fromClient, nPacket);
+				}
+			}
+			else
+			{
+				using (Packet newPacket = new Packet((int)Packet.ServerPackets.alreadyConnected))
+				{
+					newPacket.Write(fromClient);
+					AuthCore.SendTCPData(fromClient, newPacket);
+				}
+
+				// Check if there's any client connected with this session id, if there is, tell it to disconnect and then delete from db.
+				// if there isn't one, delete from database
+				bool isOnline = false;
+				foreach (KeyValuePair<int, AuthClient> c in Clients)
+				{
+					if (c.Value.getTcp() != null && c.Value != Clients[fromClient])
 					{
-						if(c.Value.getTcp().socket.Connected)
+						if (c.Value.getTcp().socket != null)
 						{
-							isOnline = true;
-							// send a disconnect packet
-							
-							break;
+							if (c.Value.getTcp().socket.Connected)
+							{
+								isOnline = true;
+								// send a disconnect packet
+
+								break;
+							}
 						}
 					}
 				}
-			}
 
-			if(!isOnline)
-			{
-				List<MySqlParameter> _params = new List<MySqlParameter>()
+				if (!isOnline)
 				{
-					MySQL_Param.Parameter("?id", aid),
-				};
-				Server.DB.AddQueryToQeue("DELETE FROM [[player]].sessions WHERE `aid`=?id LIMIT 1", _params, client);
+					List<MySqlParameter> delSess = new List<MySqlParameter>()
+					{
+						MySQL_Param.Parameter("?id", aid),
+					};
+					await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `aid`=?id LIMIT 1", delSess);
+				}
 			}
 		}
 	}
@@ -206,36 +220,7 @@ class AuthCore
 		}
 	}
 
-	private void CharactersInAccount(int client, DataTable result)
-	{
-		string data = "";
-		for (int i = 0; i < result.Rows.Count; i++)
-		{
-			string pid = result.Rows[i]["id"].ToString();
-			string name = result.Rows[i]["name"].ToString();
-			data += pid + ";" + name + "/end/";
-		}
-
-		// Set session id
-		Random rnd1 = new Random((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds);
-		Random rnd2 = new Random(rnd1.Next(1, Int32.MaxValue));
-		int nSessionId = rnd2.Next(1, Int32.MaxValue);
-		Clients[client].setSessionId(nSessionId);
-
-		// Set accound id
-		Int32.TryParse(result.Rows[1]["aid"].ToString(), out int aid);
-		Clients[client].setAID(aid);
-
-		using (Packet packet = new Packet((int)Packet.ServerPackets.charSelection))
-		{
-			packet.Write(client);
-			packet.Write(nSessionId);
-			packet.Write(data);
-			AuthCore.SendTCPData(client, packet);
-		}
-	}
-
-	private void EnterMap(int fromClient, Packet packet)
+	private async void EnterMap(int fromClient, Packet packet)
 	{
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
@@ -247,66 +232,63 @@ class AuthCore
 			{
 				MySQL_Param.Parameter("?id", pid),
 			};
-			Server.DB.AddQueryToQeue("SELECT * FROM [[player]].player WHERE `id`=?id LIMIT 1", _params, fromClient, HandleEnterMapPidCheck);
-		}
-	}
+			DataTable result = await Server.DB.QueryAsync("SELECT * FROM [[player]].player WHERE `id`=?id LIMIT 1", _params);
 
-	private void HandleEnterMapPidCheck(int client, DataTable result)
-	{
-		if (result.Rows.Count == 0)
-			Clients[client].getTcp().Disconnect();
+			if (result.Rows.Count == 0)
+				Clients[fromClient].getTcp().Disconnect();
 
-		Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
-		Int32.TryParse(result.Rows[0]["id"].ToString(), out int pid);
-		if (aid <= 0 || pid < 0)
-			Clients[client].getTcp().Disconnect();
+			Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
+			Int32.TryParse(result.Rows[0]["id"].ToString(), out int _pid);
+			if (aid <= 0 || _pid < 0)
+				Clients[fromClient].getTcp().Disconnect();
 
-		if(Clients[client].getAID() == aid)
-		{
-			Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
-			float.TryParse(result.Rows[0]["x"].ToString(), out float x);
-			float.TryParse(result.Rows[0]["y"].ToString(), out float y);
-			float.TryParse(result.Rows[0]["z"].ToString(), out float z);
-
-			// Get the appropriate server for the client
-			foreach (GameServer server in Config.GameServers)
+			if (Clients[fromClient].getAID() == aid)
 			{
-				if(server.maps.Contains(map))
-				{
-					// Insert a new session onto the database
-					List<MySqlParameter> _params = new List<MySqlParameter>()
-					{
-						MySQL_Param.Parameter("?session", Clients[client].getSessionId()),
-						MySQL_Param.Parameter("?pid", pid),
-						MySQL_Param.Parameter("?aid", aid)
-					};
-					Server.DB.QuerySync("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", _params);
+				Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
+				float.TryParse(result.Rows[0]["x"].ToString(), out float x);
+				float.TryParse(result.Rows[0]["y"].ToString(), out float y);
+				float.TryParse(result.Rows[0]["z"].ToString(), out float z);
 
-					// Send a packet to the client telling it to connect to this game server
-					using (Packet packet = new Packet((int)Packet.ServerPackets.goToServerAt))
+				// Get the appropriate server for the client
+				foreach (GameServer server in Config.GameServers)
+				{
+					if (server.maps.Contains(map))
 					{
-						packet.Write(client);
-						packet.Write(Clients[client].getSessionId());
-						packet.Write(server.addr);
-						packet.Write(server.port);
-						SendTCPData(client, packet);
+						// Assign a PID to our session entry
+						List<MySqlParameter> sParams = new List<MySqlParameter>()
+						{
+							MySQL_Param.Parameter("?session", Clients[fromClient].getSessionId()),
+							MySQL_Param.Parameter("?pid", pid),
+							MySQL_Param.Parameter("?aid", aid)
+						};
+						await Server.DB.QueryAsync("UPDATE [[player]].sessions SET `pid`=?pid WHERE `session`=?session AND `aid`=?aid LIMIT 1", sParams);
+
+						// Send a packet to the client telling it to connect to this game server
+						using (Packet nPacket = new Packet((int)Packet.ServerPackets.goToServerAt))
+						{
+							nPacket.Write(fromClient);
+							nPacket.Write(Clients[fromClient].getSessionId());
+							nPacket.Write(server.addr);
+							nPacket.Write(server.port);
+							SendTCPData(fromClient, nPacket);
+						}
+
+						Logger.Syslog($"Client #{fromClient} is entering map #{map} ({x},{y},{z}) on the server labeled '{server.label}' with pid #{pid} with a session id of {Clients[fromClient].getSessionId()}...");
+						break;
 					}
-
-					Logger.Syslog($"Client #{client} is entering map #{map} ({x},{y},{z}) on the server labeled '{server.label}' with pid #{pid} with a session id of {Clients[client].getSessionId()}...");
-					break;
-				}
-				else
-				{
-					Logger.Syslog($"[ALERT] Client #{client} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
-					Clients[client].getTcp().Disconnect();
-					return;
+					else
+					{
+						Logger.Syslog($"[ALERT] Client #{fromClient} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
+						Clients[fromClient].getTcp().Disconnect();
+						return;
+					}
 				}
 			}
-		}
-		else
-		{
-			Logger.Syslog($"[ALERT] Client #{client} attempted to enter a character of pid {pid} but he doesn't own it! AID missmatch (is #{aid} but we were looking for {Clients[client].getAID()} !!!");
-			Clients[client].getTcp().Disconnect();
+			else
+			{
+				Logger.Syslog($"[ALERT] Client #{fromClient} attempted to enter a character of pid {pid} but he doesn't own it! AID missmatch (is #{aid} but we were looking for {Clients[fromClient].getAID()} !!!");
+				Clients[fromClient].getTcp().Disconnect();
+			}
 		}
 	}
 }

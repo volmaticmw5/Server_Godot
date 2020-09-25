@@ -6,20 +6,37 @@ using System.Text;
 
 class Player
 {
-    private int session;
-    private string name;
-    private int pid;
-    private int aid;
-    private int map;
-    private Vector3 pos;
-    private Client client;
+    public enum Races
+    {
+        HUMAN = 1,
+        INFECTED = 2,
+        ORCS = 3
+    }
 
-    public Player(Client _client, int _session, int _pid, int _aid)
+    public enum Sexes
+    {
+        MALE = 1,
+        FEMALE = 1
+    }
+
+    public int session { get; set; }
+    public string name { get; set; }
+    public int pid { get; set; }
+    public int aid { get; set; }
+    public int map { get; set; }
+    public Sexes sex { get; set; }
+    public Races race { get; set; }
+    public Vector3 pos { get; set; }
+    public Client client { get; set; }
+
+    public Player(Client _client, int _session, int _pid, int _aid, Sexes _sex, Races _race)
     {
         this.client = _client;
         this.session = _session;
         this.pid = _pid;
         this.aid = _aid;
+        this.sex = _sex;
+        this.race = _race;
     }
 
     ~Player() 
@@ -32,50 +49,5 @@ class Player
                 MySQL_Param.Parameter("?pid", pid),
             };
         Server.DB.AddQueryToQeue("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params, client.getClientId());
-    }
-
-    public int getSession()
-    {
-        return this.session;
-    }
-
-    public int getPid()
-    {
-        return this.pid;
-    }
-
-    public int getAid()
-    {
-        return this.aid;
-    }
-
-    public int getMap()
-    {
-        return this.map;
-    }
-
-    public Vector3 getPos()
-    {
-        return this.pos;
-    }
-
-    public void setMap(int _map)
-    {
-        this.map = _map;
-    }
-
-    public void setPos(Vector3 _pos)
-    {
-        this.pos = _pos;
-    }
-
-    public void setName(string _name)
-    {
-        this.name = _name;
-    }
-
-    public string getName()
-    {
-        return this.name;
     }
 }

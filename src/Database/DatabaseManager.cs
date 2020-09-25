@@ -133,6 +133,34 @@ class DatabaseManager
         }
     }
 
+    public async Task<DataTable> QueryAsync(string query, List<MySqlParameter> parameters)
+    {
+        // Sanitize 
+        query = query.Replace("[[account]]", Config.DatabaseAccountDb);
+        query = query.Replace("[[player]]", Config.DatabasePlayerDb);
+        query = query.Replace("[[log]]", Config.DatabaseLogDb);
+
+        DataTable result = new DataTable();
+        try
+        {
+            MySqlCommand cmd = new MySqlCommand(query, Server.DB.GetSuitableConnection());
+
+            foreach (MySqlParameter param in parameters)
+                cmd.Parameters.Add(param);
+
+            using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
+            {
+                await da.FillAsync(result);
+                return result;
+            }
+        }
+        catch (MySqlException ex)
+        {
+            Logger.Syslog($"[MYSQL] {ex.Message}");
+        }
+        return null;
+    }
+
     public void AddQueryToQeue(string query, List<MySqlParameter> parameters, int client, Action<int, DataTable> returnMethod = null)
     {
         // Sanitize 
