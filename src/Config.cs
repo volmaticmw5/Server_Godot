@@ -19,12 +19,19 @@ struct GameServer
     public int[] maps;
 }
 
+struct MapStruct
+{
+    public int id;
+    public string name;
+}
+
 class ConfigStructure
 {
     public ServerTypes Type;
     public int Port;
     public int MaxPlayers;
     public int Tick;
+    public int MapTick;
     public string DatabaseHost;
     public int DatabasePort;
     public string DatabaseUser;
@@ -36,6 +43,7 @@ class ConfigStructure
     public string DatabasePlayerDb;
     public string DatabaseLogDb;
     public GameServer[] GameServers;
+    public MapStruct[] Maps;
 }
 
 class Config
@@ -44,6 +52,7 @@ class Config
     public static int Port;
     public static int MaxPlayers = 9999;
     public static int Tick;
+    public static int MapTick;
     public static string DatabaseHost;
     public static int DatabasePort;
     public static string DatabaseUser;
@@ -55,6 +64,7 @@ class Config
     public static string DatabasePlayerDb;
     public static string DatabaseLogDb;
     public static GameServer[] GameServers;
+    public static MapStruct[] Maps;
 
     public static int ReadConfig()
     {
@@ -70,6 +80,7 @@ class Config
                     Port = json.Port;
                     MaxPlayers = json.MaxPlayers;
                     Tick = json.Tick;
+                    try { MapTick = json.MapTick; } catch { }
                     DatabaseHost = json.DatabaseHost;
                     DatabasePort = json.DatabasePort;
                     DatabaseUser = json.DatabaseUser;
@@ -85,6 +96,13 @@ class Config
                         GameServers = json.GameServers;
                     }
                     catch { }
+
+                    try
+                    {
+                        Maps = json.Maps;
+                    }
+                    catch { }
+
                     return 0;
                 }catch(Exception e)
                 {

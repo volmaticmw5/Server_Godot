@@ -8,10 +8,10 @@ class ThreadManager
 	private static readonly List<Action> executeCopiedOnMainThread = new List<Action>();
 	private static bool actionToExecuteOnMainThread = false;
 
-	// OtherThread (todo)
-	private static readonly List<Action> executeOnAuthThread = new List<Action>();
-	private static readonly List<Action> executeCopiedOnAuthThread = new List<Action>();
-	private static bool actionToExecuteOnAuthThread = false;
+	// Map Thread
+	private static readonly List<Action> executeOnMapThread = new List<Action>();
+	private static readonly List<Action> executeCopiedOnMapThread = new List<Action>();
+	private static bool actionToExecuteOnMapThread = false;
 
 	/// <summary>Sets an action to be executed on the main thread.</summary>
 	/// <param name="_action">The action to be executed on the main thread.</param>
@@ -47,6 +47,23 @@ class ThreadManager
 			{
 				executeCopiedOnMainThread[i]();
 			}
+		}
+	}
+
+	/// <summary>Sets an action to be executed on the map thread.</summary>
+	/// <param name="_action">The action to be executed on the map thread.</param>
+	public static void ExecuteOnMapThread(Action _action)
+	{
+		if (_action == null)
+		{
+			Logger.Syslog("No action to execute on main thread!");
+			return;
+		}
+
+		lock (executeOnMapThread)
+		{
+			executeOnMapThread.Add(_action);
+			actionToExecuteOnMapThread = true;
 		}
 	}
 }

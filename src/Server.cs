@@ -7,6 +7,7 @@ class Server
     public static DatabaseManager DB;
     private static bool isRunning = true;
     private static Thread mainThread;
+    private static Thread mapThread;
 
     static void Main(string[] args)
     {
@@ -39,12 +40,22 @@ class Server
             case ServerTypes.Game:
                 Logger.Syslog($"Starting {ServerTypes.Game.ToString()} server...");
                 Core the_core = new Core();
+
+                foreach (MapStruct map in Config.Maps)
+                {
+                    Map nMap = new Map(map.id, map.name);
+                    MapManager.AddMapToManager(nMap);
+                }
+                List<Action> mapThreadActions = new List<Action>() { () => MapManager.Tick() };
+                mapThread = new Thread(new ThreadStart(() => ThreadedWork(mapThreadActions, "Map", Config.MapTick)));
+                mapThread.Start();
+
                 Logger.Syslog($"{ServerTypes.Game.ToString()} server started on port {Config.Port}");
                 break;
         }
 
-        // Initialize threads
-        List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain(), () => ThreadManager.UpdateMain() };
+        // Initialize main thread
+        List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain() };
         mainThread = new Thread(new ThreadStart(() => ThreadedWork(mainThreadActions, "Main", Config.Tick)));
         mainThread.Start();
     }

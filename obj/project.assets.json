@@ -5992,19 +5992,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Workstation\\.nuget\\packages\\": {}
+    "C:\\Users\\Portatil\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj",
+      "projectUniqueName": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj",
       "projectName": "Server",
-      "projectPath": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj",
-      "packagesPath": "C:\\Users\\Workstation\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\obj\\",
+      "projectPath": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj",
+      "packagesPath": "C:\\Users\\Portatil\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Workstation\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Portatil\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

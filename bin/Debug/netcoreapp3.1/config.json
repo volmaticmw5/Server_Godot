@@ -2,7 +2,8 @@
   "Type": "Game",
   "Port": 55001,
   "MaxPlayers": 2500,
-  "Tick": 50,
+  "Tick": 200,
+  "MapTick": 80,
   "DatabaseHost": "127.0.0.1",
   "DatabasePort": 3306,
   "DatabaseUser": "root",
@@ -13,6 +14,24 @@
   "DatabaseAccountDb": "account",
   "DatabasePlayerDb": "player",
   "DatabaseLogDb": "log",
+  "Maps": [
+    {
+      "id": 1,
+      "name": "Map one"
+    },
+    {
+      "id": 2,
+      "name": "Map two"
+    },
+    {
+      "id": 3,
+      "name": "Map three"
+    },
+    {
+      "id": 4,
+      "name": "Map four"
+    }
+  ], // For game server only
 
   // Only used by the authentication server
   "GameServers": [
