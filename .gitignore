@@ -7,4 +7,5 @@ bin/*
 obj
 obj/
 obj/*
-
+obj/Debug/*
+obj/Debug/
