@@ -87,6 +87,7 @@ class Client
             using (Packet newPacket = new Packet((int)Packet.ServerPackets.identifyoself))
             {
                 newPacket.Write(cid);
+                newPacket.Write("Welcome to the server");
                 Core.SendTCPData(cid, newPacket);
             }
             try { Logger.Syslog($"Client #{client.cid} ({Core.GetClientIP(cid)}) connected to the server"); } catch { Logger.Syslog("A client connected to the server but we couldn't retrieve it's ip address."); }

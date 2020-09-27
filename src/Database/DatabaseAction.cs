@@ -49,17 +49,16 @@ class DatabaseAction
         }
     }
 
-    private DataTable QueryAsync(MySqlCommand cmd)
+    private async Task<DataTable> QueryAsync(MySqlCommand cmd)
     {
         try
         {
             DataTable result = new DataTable();
             using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
             {
-                da.FillAsync(result);
+                await da.FillAsync(result);
+                return result;
             }
-
-            return result;
         }
         catch { Logger.Syslog($"A query failed to execute! Command: {cmd}"); return null; }
     }
