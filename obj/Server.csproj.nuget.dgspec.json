@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj": {}
+    "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj": {
+    "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj",
+        "projectUniqueName": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj",
         "projectName": "Server",
-        "projectPath": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\Server.csproj",
-        "packagesPath": "C:\\Users\\Portatil\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Portatil\\Desktop\\Game\\Server_Godot\\obj\\",
+        "projectPath": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\Server.csproj",
+        "packagesPath": "C:\\Users\\Workstation\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Workstation\\Desktop\\Server\\Server\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Portatil\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Workstation\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [

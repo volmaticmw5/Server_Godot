@@ -27,21 +27,41 @@ public class Security
         return passwordHash.SequenceEqual(passwordHash);
     }
 
-    internal static bool ValidatePacket(int id, int fromClient, int session_id)
+    internal static bool ValidatePacket(int id, int fromClient, int session_id, bool auth = true)
     {
         if (id == fromClient)
         {
-            if(AuthCore.Clients[fromClient] != null)
+            if(auth)
             {
-                if(AuthCore.Clients[fromClient].getSessionId() == session_id)
+                if (AuthCore.Clients[fromClient] != null)
                 {
-                    return true;
+                    if (AuthCore.Clients[fromClient].getSessionId() == session_id)
+                    {
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                if (Core.Clients[fromClient] != null)
+                {
+                    if ((int)Core.Clients[fromClient].session_id == session_id)
+                    {
+                        return true;
+                    }
                 }
             }
         }
+        else
+        {
+            Logger.Syslog($"Expected client id of {id} but got {fromClient}!!!");
+        }
 
-        Logger.Syslog($"Failed to validate client, disconnecting client #{fromClient}");
-        AuthCore.Clients[fromClient].getTcp().Disconnect();
+        Logger.Syslog($"Failed to validate client, disconnecting client #{fromClient} | Expecting sid of {Core.Clients[fromClient].session_id} and got {session_id}");
+        if (auth)
+            AuthCore.Clients[fromClient].getTcp().Disconnect();
+        else
+            Core.Clients[fromClient].getTcp().Disconnect();
         return false;
     }
 }

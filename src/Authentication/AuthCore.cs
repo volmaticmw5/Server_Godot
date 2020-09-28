@@ -144,7 +144,7 @@ class AuthCore
 				}
 
 				// Set session id
-				Random rnd1 = new Random((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds);
+				Random rnd1 = new Random((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds);
 				Random rnd2 = new Random(rnd1.Next(1, Int32.MaxValue));
 				int nSessionId = rnd2.Next(1, Int32.MaxValue);
 				Clients[fromClient].setSessionId(nSessionId);
@@ -156,7 +156,7 @@ class AuthCore
 				List<MySqlParameter> sessParams = new List<MySqlParameter>()
 				{
 					MySQL_Param.Parameter("?session", Clients[fromClient].getSessionId()),
-					MySQL_Param.Parameter("?pid", -1), // temporary pid
+					MySQL_Param.Parameter("?pid", Clients[fromClient].getSessionId()), // temporary pid
 					MySQL_Param.Parameter("?aid", aid)
 				};
 				await Server.DB.QueryAsync("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", sessParams);

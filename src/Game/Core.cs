@@ -74,7 +74,6 @@ class Core
 	{
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
-
 		if (cid == fromClient)
 		{
 			// check this session id against the database, if it matches we create a new player instance and so on, if not, we disconnect the client :)
@@ -89,11 +88,18 @@ class Core
 				Clients[fromClient].getTcp().Disconnect(3);
 				return;
 			}
-
 			Int32.TryParse(result.Rows[0]["pid"].ToString(), out int pid);
 			Int32.TryParse(result.Rows[0]["aid"].ToString(), out int aid);
-			Int32.TryParse(result.Rows[0]["sex"].ToString(), out int sex);
-			Int32.TryParse(result.Rows[0]["race"].ToString(), out int race);
+			Int32.TryParse(result.Rows[0]["session"].ToString(), out int session);
+			Clients[fromClient].session_id = session;
+
+			List<MySqlParameter> param = new List<MySqlParameter>()
+			{
+				MySQL_Param.Parameter("?pid", pid),
+			};
+			DataTable pResult = await Server.DB.QueryAsync("SELECT * FROM [[player]].player WHERE `id`=?pid LIMIT 1", param);
+			Int32.TryParse(pResult.Rows[0]["sex"].ToString(), out int sex);
+			Int32.TryParse(pResult.Rows[0]["race"].ToString(), out int race);
 
 			Player player = new Player(Clients[fromClient], sid, pid, aid, (Player.Sexes)sex, (Player.Races)race);
 			Clients[fromClient].setPlayer(player);
@@ -125,6 +131,7 @@ class Core
 			using (Packet pck = new Packet((int)Packet.ServerPackets.warpTo))
 			{
 				pck.Write(fromClient); // Cid
+				pck.Write(session); // Session id
 				pck.Write(map); // map index
 				pck.Write(pos); // vec3 pos
 				pck.Write(name); // name
@@ -145,7 +152,7 @@ class Core
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
 		Vector3 pos = packet.ReadVector3();
-		if(Security.ValidatePacket(cid, fromClient, sid))
+		if(Security.ValidatePacket(cid, fromClient, sid, false))
 		{
 			Clients[fromClient].getPlayer().pos = pos;
 		}

@@ -9,7 +9,7 @@ class Client
     private int cid;
     private static readonly int buffer_size = 524;
     private TCP _tcp;
-    private int session_id;
+    public int session_id { get; set; }
     private Player player;
 
     public Client(int cid)
