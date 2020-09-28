@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Text;
 
 class Core
@@ -47,6 +48,7 @@ class Core
 		main_thread_packets = new Dictionary<int, PacketHandler>()
 		{
 			{(int)Packet.ClientPackets.itsme, ItsMe },
+			{(int)Packet.ClientPackets.myPosition, HandlePositionUpdate },
 		};
 	}
 
@@ -135,6 +137,17 @@ class Core
 		else
 		{
 			Clients[fromClient].getTcp().Disconnect(2);
+		}
+	}
+
+	private static void HandlePositionUpdate(int fromClient, Packet packet)
+	{
+		int cid = packet.ReadInt();
+		int sid = packet.ReadInt();
+		Vector3 pos = packet.ReadVector3();
+		if(Security.ValidatePacket(cid, fromClient, sid))
+		{
+			Clients[fromClient].getPlayer().pos = pos;
 		}
 	}
 }

@@ -49,5 +49,7 @@ class Player
                 MySQL_Param.Parameter("?pid", pid),
             };
         Server.DB.AddQueryToQeue("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params, client.getClientId());
+
+        // Dump data to database
     }
 }

@@ -14,7 +14,8 @@ public class Packet : IDisposable
 		goToServerAt,
 		identifyoself,
 		warpTo,
-		alreadyConnected
+		alreadyConnected,
+		playersInMap
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -24,6 +25,7 @@ public class Packet : IDisposable
 		authenticate,
 		enterMap,
 		itsme,
+		myPosition
 	}
 
 	private List<byte> buffer;

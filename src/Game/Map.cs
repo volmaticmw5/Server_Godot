@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 class Map
@@ -20,10 +21,30 @@ class Map
         {
             if(client.Value.getPlayer() != null)
             {
-                if(client.Value.getPlayer().getMap() == this.id)
+                if(client.Value.getPlayer().map == this.id)
                 {
                     // Go through all the players on this map, if they're close enough, send data to this client
+                    string data = "";
 
+                    foreach (KeyValuePair<int, Client> other in Core.Clients)
+                    {
+                        if (other.Value.getPlayer().map == this.id)
+                        {
+                            if(Vector3.Distance(client.Value.getPlayer().pos, other.Value.getPlayer().pos) < Config.ViewDistance)
+                            {
+                                data += $"{other.Value.getPlayer().pid};{other.Value.getPlayer().name};{other.Value.getPlayer().pos.X.ToString()};{other.Value.getPlayer().pos.Y.ToString()};{other.Value.getPlayer().pos.Z.ToString()}/end/";
+                            }
+                        }
+                    }
+
+                    // Send the packet even if there's no data since the client will only send us their position upon receiving this!
+                    using (Packet packet = new Packet((int)Packet.ServerPackets.playersInMap))
+                    {
+                        packet.Write(client.Value.getClientId()); // Cid
+                        packet.Write(data);
+
+                        Core.SendTCPData(client.Value.getClientId(), packet);
+                    }
                 }
             }
         }
