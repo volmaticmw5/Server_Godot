@@ -1,7 +1,8 @@
 {
-  "Type": "Game",
-  "Port": 55001,
+  "Type": "Authentication",
+  "Port": 55000,
   "MaxPlayers": 2500,
+  "MaxCharactersInAccount": 8,
   "Tick": 200,
   "MapTick": 80,
   "DatabaseHost": "127.0.0.1",

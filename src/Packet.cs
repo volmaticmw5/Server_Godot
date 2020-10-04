@@ -190,6 +190,15 @@ public class Packet : IDisposable
 		Write(_value.Z);
 		Write(_value.W);
 	}
+
+	/// <summary>Adds a character entry to the packet.</summary>
+	/// <param name="_value">The character entry to add.</param>
+	public void Write(CharacterSelectionEntry entry)
+	{
+		Write(entry.pid);
+		Write(entry.name);
+		Write(entry.isValidCharacter);
+	}
 	#endregion
 
 	#region Read Data

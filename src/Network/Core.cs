@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +10,7 @@ using System.Text;
 
 class Core
 {
-	private TcpListener socket;
+	public TcpListener socket;
 	public static Dictionary<int, PacketHandler> main_thread_packets;
 	public delegate void PacketHandler(int fromClient, Packet packet);
 	public static Dictionary<int, Client> Clients = new Dictionary<int, Client>();
@@ -22,25 +23,30 @@ class Core
 		socket.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
 	}
 
-	private void TCPConnectCallback(IAsyncResult ar)
+	public void TCPConnectCallback(IAsyncResult ar)
 	{
 		TcpClient client = socket.EndAcceptTcpClient(ar);
 		socket.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
 		Logger.Syslog($"Incoming connection from {client.Client.RemoteEndPoint}..");
 
-		for (int i = 1; i <= Config.MaxPlayers; i++)
-		{
-			if (Clients[i].getTcp().socket == null)
-			{
-				Clients[i].getTcp().Connect(client);
-				return;
-			}
-		}
-
-		Logger.Syslog($"Server is too busy to listen to {client.Client.RemoteEndPoint}");
+		if(!AttemptConnection(client))
+			Logger.Syslog($"Server is too busy to listen to {client.Client.RemoteEndPoint}");
 	}
 
-	private void InitializePackets()
+	public virtual bool AttemptConnection(TcpClient client)
+	{
+		for (int i = 1; i <= Config.MaxPlayers; i++)
+		{
+			if (Clients[i].tcp.socket == null)
+			{
+				Clients[i].tcp.Connect(client);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public virtual void InitializePackets()
 	{
 		for (int i = 1; i <= Config.MaxPlayers; i++)
 			Clients.Add(i, new Client(i));
@@ -57,7 +63,7 @@ class Core
 		try
 		{
 			packet.WriteLength();
-			Clients[toClient].getTcp().SendData(packet);
+			Clients[toClient].tcp.SendData(packet);
 		}
 		catch
 		{
@@ -67,7 +73,7 @@ class Core
 
 	public static string GetClientIP(int clientId)
 	{
-		return Clients[clientId].getTcp().socket.Client.RemoteEndPoint.ToString();
+		return Clients[clientId].tcp.socket.Client.RemoteEndPoint.ToString();
 	}
 
 	private async void ItsMe(int fromClient, Packet packet)
@@ -85,7 +91,7 @@ class Core
 			DataTable result = await Server.DB.QueryAsync("SELECT * FROM [[player]].sessions WHERE `session`=?session LIMIT 1", _params);
 			if (result.Rows.Count == 0)
 			{
-				Clients[fromClient].getTcp().Disconnect(3);
+				Clients[fromClient].tcp.Disconnect(3);
 				return;
 			}
 			Int32.TryParse(result.Rows[0]["pid"].ToString(), out int pid);
@@ -101,7 +107,19 @@ class Core
 			Int32.TryParse(pResult.Rows[0]["sex"].ToString(), out int sex);
 			Int32.TryParse(pResult.Rows[0]["race"].ToString(), out int race);
 
-			Player player = new Player(Clients[fromClient], sid, pid, aid, (Player.Sexes)sex, (Player.Races)race);
+			PlayerStats stats;
+			string rawStats = pResult.Rows[0]["stats"].ToString();
+			if(rawStats == "" || rawStats == null)
+			{
+				stats = new PlayerStats();
+			}
+			else
+			{
+				stats = JsonConvert.DeserializeObject<PlayerStats>(rawStats);
+			}
+			
+
+			Player player = new Player(Clients[fromClient], sid, pid, aid, (Sexes)sex, (Races)race, stats);
 			Clients[fromClient].setPlayer(player);
 			List<MySqlParameter> __params = new List<MySqlParameter>()
 			{
@@ -112,7 +130,7 @@ class Core
 
 			if (rows.Rows.Count == 0)
 			{
-				Clients[fromClient].getTcp().Disconnect(4);
+				Clients[fromClient].tcp.Disconnect(4);
 				return;
 			}
 
@@ -121,13 +139,13 @@ class Core
 			float.TryParse(rows.Rows[0]["z"].ToString(), out float z);
 			Int32.TryParse(rows.Rows[0]["map"].ToString(), out int map);
 
-			Clients[fromClient].getPlayer().name = rows.Rows[0]["name"].ToString();
-			Clients[fromClient].getPlayer().map = map;
-			Clients[fromClient].getPlayer().pos = new System.Numerics.Vector3(x, y, z);
+			Clients[fromClient].player.name = rows.Rows[0]["name"].ToString();
+			Clients[fromClient].player.map = map;
+			Clients[fromClient].player.pos = new System.Numerics.Vector3(x, y, z);
 
 			// By now the player has been created, lets tell the client to load target map with target player at target position!
-			System.Numerics.Vector3 pos = Clients[fromClient].getPlayer().pos;
-			string name = Clients[fromClient].getPlayer().name;
+			System.Numerics.Vector3 pos = Clients[fromClient].player.pos;
+			string name = Clients[fromClient].player.name;
 			using (Packet pck = new Packet((int)Packet.ServerPackets.warpTo))
 			{
 				pck.Write(fromClient); // Cid
@@ -138,12 +156,16 @@ class Core
 				pck.Write(sex); // sex
 				pck.Write(race); // race
 
+				// Stats
+				pck.Write(stats.movementSpeed);
+				pck.Write(stats.attackSpeed);
+
 				SendTCPData(fromClient, pck);
 			}
 		}
 		else
 		{
-			Clients[fromClient].getTcp().Disconnect(2);
+			Clients[fromClient].tcp.Disconnect(2);
 		}
 	}
 
@@ -152,9 +174,9 @@ class Core
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
 		Vector3 pos = packet.ReadVector3();
-		if(Security.ValidatePacket(cid, fromClient, sid, false))
+		if(Security.ValidateGamePacket(cid, fromClient, sid))
 		{
-			Clients[fromClient].getPlayer().pos = pos;
+			Clients[fromClient].player.pos = pos;
 		}
 	}
 }

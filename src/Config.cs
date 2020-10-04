@@ -30,6 +30,7 @@ class ConfigStructure
     public ServerTypes Type;
     public int Port;
     public int MaxPlayers;
+    public int MaxCharactersInAccount;
     public int Tick;
     public int MapTick;
     public string DatabaseHost;
@@ -52,6 +53,7 @@ class Config
     public static ServerTypes Type;
     public static int Port;
     public static int MaxPlayers = 9999;
+    public static int MaxCharactersInAccount;
     public static int Tick;
     public static int MapTick;
     public static string DatabaseHost;
@@ -68,7 +70,7 @@ class Config
     public static GameServer[] GameServers;
     public static MapStruct[] Maps;
 
-    public static int ReadConfig()
+    public static bool ReadConfig()
     {
         if (File.Exists("config.json"))
         {
@@ -81,6 +83,7 @@ class Config
                     Type = json.Type;
                     Port = json.Port;
                     MaxPlayers = json.MaxPlayers;
+                    MaxCharactersInAccount = json.MaxCharactersInAccount;
                     Tick = json.Tick;
                     try { MapTick = json.MapTick; } catch { }
                     DatabaseHost = json.DatabaseHost;
@@ -106,23 +109,23 @@ class Config
                     }
                     catch { }
 
-                    return 0;
+                    return true;
                 }catch(Exception e)
                 {
                     Logger.Syslog("Error reading configuration file: " + e.ToString());
-                    return -1;
+                    return false;
                 }
             }
             else
             {
                 Logger.Syslog("Invalid configuration file!");
-                return -1;
+                return false;
             }
         }
         else
         {
             Logger.Syslog("Configuration file is missing, please make sure it exists!");
-            return -1;
+            return false;
         }
     } 
 }

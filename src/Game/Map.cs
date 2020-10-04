@@ -19,26 +19,26 @@ class Map
         // Send every player on this map a list of player data near them
         foreach (KeyValuePair<int, Client> client in Core.Clients)
         {
-            if (client.Value.getPlayer() == null)
+            if (client.Value.player == null)
                 continue;
-            if (client.Value.getPlayer().map != this.id)
+            if (client.Value.player.map != this.id)
                 continue;
 
             // Go through all the players on this map, if they're close enough, send data to this client
             string data = "";
             foreach (KeyValuePair<int, Client> other in Core.Clients)
             {
-                if (other.Value.getPlayer() == null)
+                if (other.Value.player == null)
                     continue;
 
-                if (other.Value.getPlayer().pid == client.Value.getPlayer().pid)
+                if (other.Value.player.pid == client.Value.player.pid)
                     continue;
 
-                if (other.Value.getPlayer().map == this.id)
+                if (other.Value.player.map == this.id)
                 {
-                    if(Vector3.Distance(client.Value.getPlayer().pos, other.Value.getPlayer().pos) < Config.ViewDistance)
+                    if(Vector3.Distance(client.Value.player.pos, other.Value.player.pos) < Config.ViewDistance)
                     {
-                        data += $"{other.Value.getPlayer().pid};{((int)other.Value.getPlayer().race).ToString()};{((int)other.Value.getPlayer().sex).ToString()};{other.Value.getPlayer().name};{other.Value.getPlayer().pos.X.ToString()};{other.Value.getPlayer().pos.Y.ToString()};{other.Value.getPlayer().pos.Z.ToString()}/end/";
+                        data += $"{other.Value.player.pid};{((int)other.Value.player.race).ToString()};{((int)other.Value.player.sex).ToString()};{other.Value.player.name};{other.Value.player.pos.X.ToString()};{other.Value.player.pos.Y.ToString()};{other.Value.player.pos.Z.ToString()}/end/";
                     }
                 }
             }
@@ -46,10 +46,10 @@ class Map
             // Send the packet even if there's no data since the client will only send us their position upon receiving this!
             using (Packet packet = new Packet((int)Packet.ServerPackets.playersInMap))
             {
-                packet.Write(client.Value.getClientId()); // Cid
+                packet.Write(client.Value.cid);
                 packet.Write(data);
 
-                Core.SendTCPData(client.Value.getClientId(), packet);
+                Core.SendTCPData(client.Value.cid, packet);
             }
         }
     }

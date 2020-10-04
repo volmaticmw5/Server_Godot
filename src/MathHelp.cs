@@ -7,7 +7,6 @@ class MathHelp
 {
     public static float Lerp(float from, float to, float time)
     {
-        //return (1 - time) * from + time * to;
         return (from + time * (to - from));
     }
 
