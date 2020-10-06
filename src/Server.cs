@@ -67,7 +67,7 @@ class Server
             return;
 
         MapManager.AddConfigMapsToMapManager();
-        List<Action> mapThreadActions = new List<Action>() { () => MapManager.Tick() };
+        List<Action> mapThreadActions = new List<Action>() { () => ThreadManager.UpdateMapThread(), () => MapManager.Update() };
         mapThread = new Thread(new ThreadStart(() => ThreadedWork(mapThreadActions, "Map", Config.MapTick)));
         mapThread.Start();
     }

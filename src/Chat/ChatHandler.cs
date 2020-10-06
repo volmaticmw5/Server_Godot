@@ -6,6 +6,6 @@ class ChatHandler
 {
     public static void HandleConnect(int fromClient, Packet packet)
     {
-        Logger.Syslog($"client #{fromClient} connected to chat server");
+        Logger.Syslog($"Client #{fromClient} is now connected to chat server.");
     }
 }

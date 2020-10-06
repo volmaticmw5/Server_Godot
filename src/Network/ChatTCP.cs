@@ -18,9 +18,9 @@ class ChatTCP : TCP
         configureSocket(_socket);
         stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
 
-        using (Packet newPacket = new Packet((int)Packet.ServerPackets.connectSucess))
+        using (Packet newPacket = new Packet((int)Packet.ServerPackets.chatConnect))
         {
-            newPacket.Write("Ping?");
+            newPacket.Write("Welcome to the chat server");
             newPacket.Write(cid);
             ChatCore.SendTCPData(cid, newPacket);
         }

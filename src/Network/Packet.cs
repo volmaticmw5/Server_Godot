@@ -15,7 +15,8 @@ public class Packet : IDisposable
 		identifyoself,
 		warpTo,
 		alreadyConnected,
-		playersInMap
+		playersInMap,
+		chatConnect
 	}
 
 	/// <summary>Sent from client to server.</summary>

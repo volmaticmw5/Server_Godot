@@ -12,6 +12,7 @@ class Core
 {
 	public TcpListener socket;
 	public static Dictionary<int, PacketHandler> main_thread_packets;
+	public static Dictionary<int, PacketHandler> map_thread_packets;
 	public delegate void PacketHandler(int fromClient, Packet packet);
 	public Dictionary<int, Client> Clients = new Dictionary<int, Client>();
 
@@ -54,6 +55,10 @@ class Core
 		main_thread_packets = new Dictionary<int, PacketHandler>()
 		{
 			{(int)Packet.ClientPackets.itsme, PlayerManager.NewConnectingPlayer },
+		};
+
+		map_thread_packets = new Dictionary<int, PacketHandler>()
+		{
 			{(int)Packet.ClientPackets.myPosition, PlayerManager.HandlePositionUpdate },
 		};
 	}

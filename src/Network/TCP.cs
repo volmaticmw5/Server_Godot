@@ -109,6 +109,13 @@ class TCP
                     Core.main_thread_packets[packetId](cid, packet);
                 });
             }
+            else if (Core.map_thread_packets.ContainsKey(packetId))
+            {
+                ThreadManager.ExecuteOnMapThread(() =>
+                {
+                    Core.map_thread_packets[packetId](cid, packet);
+                });
+            }
             else
             {
                 Logger.Syslog($"Received an unknown packet with id of {packetId}");

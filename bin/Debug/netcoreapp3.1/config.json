@@ -1,6 +1,6 @@
 {
-  "Type": "Authentication",
-  "Port": 55000,
+  "Type": "Game",
+  "Port": 55001,
   "MaxPlayers": 2500,
   "MaxCharactersInAccount": 8,
   "Tick": 200,

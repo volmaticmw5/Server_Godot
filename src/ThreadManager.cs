@@ -66,4 +66,24 @@ class ThreadManager
 			actionToExecuteOnMapThread = true;
 		}
 	}
+
+	/// <summary>Executes all code meant to run on the map thread. NOTE: Call this ONLY from the main thread.</summary>
+	public static void UpdateMapThread()
+	{
+		if (actionToExecuteOnMapThread)
+		{
+			executeCopiedOnMapThread.Clear();
+			lock (executeOnMapThread)
+			{
+				executeCopiedOnMapThread.AddRange(executeOnMapThread);
+				executeOnMapThread.Clear();
+				actionToExecuteOnMapThread = false;
+			}
+
+			for (int i = 0; i < executeCopiedOnMapThread.Count; i++)
+			{
+				executeCopiedOnMapThread[i]();
+			}
+		}
+	}
 }

@@ -45,16 +45,13 @@ class Player
 
     public async void Dispose()
     {
-        Logger.Syslog($"Player with session id {session} dumped and destroyed.");
-
-        // Dump player data to the database
         string statsRaw = JsonConvert.SerializeObject(this.stats);
         List<MySqlParameter> dumpParams = new List<MySqlParameter>()
         {
             MySQL_Param.Parameter("?pid", pid),
-            MySQL_Param.Parameter("?x", this.pos.X.ToString("0.000")), // round to .000f
-            MySQL_Param.Parameter("?y", this.pos.Y.ToString("0.000")), // round to .000f
-            MySQL_Param.Parameter("?z", this.pos.Z.ToString("0.000")), // round to .000f
+            MySQL_Param.Parameter("?x", this.pos.X.ToString("0.000")),
+            MySQL_Param.Parameter("?y", this.pos.Y.ToString("0.000")),
+            MySQL_Param.Parameter("?z", this.pos.Z.ToString("0.000")),
             MySQL_Param.Parameter("?map", this.map),
             MySQL_Param.Parameter("?stats", statsRaw),
         };
@@ -67,6 +64,8 @@ class Player
             MySQL_Param.Parameter("?pid", pid),
         };
         await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params);
+
+        Logger.Syslog($"Player with session id {session} dumped and destroyed.");
     }
 
     public void UpdatePosition(Vector3 newPos)

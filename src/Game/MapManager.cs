@@ -15,7 +15,7 @@ class MapManager
         }
     }
 
-    public static void Tick()
+    public static void Update()
     {
         foreach (Map map in Maps)
         {
