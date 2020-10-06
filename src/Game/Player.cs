@@ -27,7 +27,7 @@ class Player
     public int map { get; set; }
     public Sexes sex { get; set; }
     public Races race { get; set; }
-    public Vector3 pos { get; set; }
+    public Vector3 pos { get; private set; }
     public Client client { get; set; }
     public PlayerStats stats { get; set; }
 
@@ -67,5 +67,10 @@ class Player
             MySQL_Param.Parameter("?pid", pid),
         };
         await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params);
+    }
+
+    public void UpdatePosition(Vector3 newPos)
+    {
+        this.pos = newPos;
     }
 }

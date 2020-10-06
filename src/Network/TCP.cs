@@ -71,7 +71,7 @@ class TCP
             int byteLength = stream.EndRead(ar);
             if (byteLength <= 0)
             {
-                Core.Clients[cid].tcp.Disconnect(0);
+                Server.the_core.Clients[cid].tcp.Disconnect(0);
                 return;
             }
 
@@ -80,7 +80,7 @@ class TCP
         }
         catch
         {
-            Core.Clients[cid].tcp.Disconnect(1);
+            Server.the_core.Clients[cid].tcp.Disconnect(1);
         }
     }
 

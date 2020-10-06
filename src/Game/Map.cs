@@ -17,7 +17,7 @@ class Map
     public void Update()
     {
         // Send every player on this map a list of player data near them
-        foreach (KeyValuePair<int, Client> client in Core.Clients)
+        foreach (KeyValuePair<int, Client> client in Server.the_core.Clients)
         {
             if (client.Value.player == null)
                 continue;
@@ -26,7 +26,7 @@ class Map
 
             // Go through all the players on this map, if they're close enough, send data to this client
             string data = "";
-            foreach (KeyValuePair<int, Client> other in Core.Clients)
+            foreach (KeyValuePair<int, Client> other in Server.the_core.Clients)
             {
                 if (other.Value.player == null)
                     continue;

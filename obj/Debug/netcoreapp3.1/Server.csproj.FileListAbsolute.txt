@@ -32,7 +32,6 @@ C:\Users\Workstation\Desktop\Server\Server\bin\Debug\netcoreapp3.1\runtimes\unix
 C:\Users\Workstation\Desktop\Server\Server\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
 C:\Users\Workstation\Desktop\Server\Server\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\Workstation\Desktop\Server\Server\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
-C:\Users\Workstation\Desktop\Server\Server\obj\Debug\netcoreapp3.1\Server.csprojAssemblyReference.cache
 C:\Users\Portatil\Desktop\Game\Server_Godot\bin\Debug\netcoreapp3.1\Server.exe
 C:\Users\Portatil\Desktop\Game\Server_Godot\bin\Debug\netcoreapp3.1\Server.deps.json
 C:\Users\Portatil\Desktop\Game\Server_Godot\bin\Debug\netcoreapp3.1\Server.runtimeconfig.json
@@ -68,3 +67,4 @@ C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.Assem
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.csproj.CopyComplete
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.dll
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.pdb
+C:\Users\Workstation\Desktop\Server\Server\obj\Debug\netcoreapp3.1\Server.csprojAssemblyReference.cache

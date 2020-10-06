@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-class AuthTCP : TCP
+class ChatTCP : TCP
 {
-    public new AuthClient client;
+    public new ChatClient client;
 
-    public AuthTCP(AuthClient _client, int _cid) : base(_client, _cid)
+    public ChatTCP(ChatClient _client, int _cid) : base(_client, _cid)
     {
         this.client = _client;
         this.cid = _cid;
@@ -18,19 +18,13 @@ class AuthTCP : TCP
         configureSocket(_socket);
         stream.BeginRead(receivedBuff, 0, buffer_size, ReceiveCallback, null);
 
-        /*
-         *
-         * A new client has connected to the authentication server
-         * This is NOT an authentication request, its just a heartbeat 
-         * If we hear back a valid PONG response then we "allow" the client to request authentication
-         */
         using (Packet newPacket = new Packet((int)Packet.ServerPackets.connectSucess))
         {
             newPacket.Write("Ping?");
             newPacket.Write(cid);
-            AuthCore.SendTCPData(cid, newPacket);
+            ChatCore.SendTCPData(cid, newPacket);
         }
-        try { Logger.Syslog($"Client #{client.cid} ({AuthCore.GetClientIP(cid)}) connected to the authentication server"); } catch { Logger.Syslog("A client connected to the authentication server but we couldn't retrieve it's ip address."); }
+        try { Logger.Syslog($"Client #{client.cid} ({ChatCore.GetClientIP(cid)}) connected to the chat server"); } catch { Logger.Syslog("A client connected to the chat server but we couldn't retrieve it's ip address."); }
     }
 
     public override void SendData(Packet packet)
@@ -54,7 +48,7 @@ class AuthTCP : TCP
 
     public override void ReceiveCallback(IAsyncResult ar)
     {
-        AuthCore core = (AuthCore)Server.the_core;
+        ChatCore core = (ChatCore)Server.the_core;
         try
         {
             int byteLength = stream.EndRead(ar);
@@ -89,14 +83,14 @@ class AuthTCP : TCP
         {
             byte[] packetBytes = receivedPacket.ReadBytes(packetLength);
 
-            Packet authPacket = new Packet(packetBytes);
-            int packetId = authPacket.ReadInt();
+            Packet chatPacket = new Packet(packetBytes);
+            int packetId = chatPacket.ReadInt();
 
-            if (AuthCore.main_thread_packets.ContainsKey(packetId))
+            if (ChatCore.main_thread_packets.ContainsKey(packetId))
             {
                 ThreadManager.ExecuteOnMainThread(() =>
                 {
-                    AuthCore.main_thread_packets[packetId](cid, authPacket);
+                    ChatCore.main_thread_packets[packetId](cid, chatPacket);
                 });
             }
             else

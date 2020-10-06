@@ -10,6 +10,7 @@ class Authentication
 {
 	public static async void Authenticate(int fromClient, Packet packet)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		int id = packet.ReadInt();
 		string user = packet.ReadString();
 		string password = packet.ReadString();
@@ -25,14 +26,14 @@ class Authentication
 		if (!hasSession)
 		{
 			AuthHelpers.SetSessionIDtoClient(fromClient, aid);
-			AuthCore.Clients[fromClient].setAID(aid);
+			core.Clients[fromClient].setAID(aid);
 			AuthHelpers.CreateSessionInDatabase(fromClient, aid);
 			CharacterSelectionEntry[] characters = await AuthHelpers.GetCharactersInAccount(aid);
 			AuthHelpers.SendCharacterSelectionDataToClient(fromClient, characters);
 		}
 		else
 		{
-			AuthCore.Clients[fromClient].setAID(aid);
+			core.Clients[fromClient].setAID(aid);
 			AuthHelpers.SendAlreadyConnectedPacket(fromClient);
 			AuthHelpers.SendDisconnectPacketToAlreadyConnectedClient(fromClient);
 		}
@@ -40,17 +41,18 @@ class Authentication
 
 	public static async void EnterMap(int fromClient, Packet packet)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		int cid = packet.ReadInt();
 		int sid = packet.ReadInt();
 		int pid = packet.ReadInt();
 
-		if (!Security.ValidateAuthPacket(cid, fromClient, sid))
+		if (!Security.Validate(cid, fromClient, sid))
 			return;
 
 		bool ownsPlayer = await AuthHelpers.AccountOwnsPlayer(cid, pid);
 		if (!ownsPlayer)
 		{
-			AuthCore.Clients[fromClient].tcp.Disconnect();
+			core.Clients[fromClient].tcp.Disconnect();
 			return;
 		}
 

@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 enum ServerTypes
 {
     Authentication,
-    Handler,
+    Chat,
     Game
 }
 
@@ -127,5 +127,16 @@ class Config
             Logger.Syslog("Configuration file is missing, please make sure it exists!");
             return false;
         }
-    } 
+    }
+
+    public static bool TryReadConfigFiles()
+    {
+        bool validConfig = Config.ReadConfig();
+        if (!validConfig)
+        {
+            Logger.Syslog("Server initialization aborted, error reading configuration.");
+            return false;
+        }
+        return true;
+    }
 }

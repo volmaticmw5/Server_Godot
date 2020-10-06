@@ -12,43 +12,64 @@ class Server
 
     static void Main(string[] args)
     {
-        bool validConfig = Config.ReadConfig();
-        if(!validConfig)
-        {
-            Logger.Syslog("Server initialization aborted, error reading configuration.");
-            Environment.Exit(1);
-        }
+        bool canBoot = SetupServerForInitialization();
+        if(!canBoot) Environment.Exit(1);
+        BootServer();
+    }
 
+    private static bool SetupServerForInitialization()
+    {
+        if (!Config.TryReadConfigFiles()) return false;
+        if (!TryConnectToDatabase()) return false;
+        return true;
+    }
+
+    private static bool TryConnectToDatabase()
+    {
         DB = new DatabaseManager(Config.DatabaseTick, Config.DatabasePoolSize);
         if (!DB.IsOK())
         {
             Logger.Syslog("Server initialization failed: database manager was not ok");
-            Environment.Exit(1);
+            return false;
         }
+        return true;
+    }
 
+    private static void BootServer()
+    {
+        StartCorrectTypeOfServerCore();
+        InitializeMainThread();
+        InitializeMapThread();
+    }
+
+    private static void StartCorrectTypeOfServerCore()
+    {
         if (Config.Type == ServerTypes.Authentication)
             Server.the_core = new AuthCore();
-        else
+        else if (Config.Type == ServerTypes.Game)
             Server.the_core = new Core();
+        else if (Config.Type == ServerTypes.Chat)
+            Server.the_core = new ChatCore();
 
         Logger.Syslog($"{Config.Type.ToString()} server started on port {Config.Port}");
+    }
 
-        if(Config.Type == ServerTypes.Game)
-        {
-            foreach (MapStruct map in Config.Maps)
-            {
-                Map nMap = new Map(map.id, map.name);
-                MapManager.AddMapToManager(nMap);
-            }
-            List<Action> mapThreadActions = new List<Action>() { () => MapManager.Tick() };
-            mapThread = new Thread(new ThreadStart(() => ThreadedWork(mapThreadActions, "Map", Config.MapTick)));
-            mapThread.Start();
-        }
-
-        // Initialize main thread
+    private static void InitializeMainThread()
+    {
         List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain() };
         mainThread = new Thread(new ThreadStart(() => ThreadedWork(mainThreadActions, "Main", Config.Tick)));
         mainThread.Start();
+    }
+
+    private static void InitializeMapThread()
+    {
+        if (Config.Type != ServerTypes.Game)
+            return;
+
+        MapManager.AddConfigMapsToMapManager();
+        List<Action> mapThreadActions = new List<Action>() { () => MapManager.Tick() };
+        mapThread = new Thread(new ThreadStart(() => ThreadedWork(mapThreadActions, "Map", Config.MapTick)));
+        mapThread.Start();
     }
 
     private static void ThreadedWork(List<Action> actions, string threadName, int msTick)

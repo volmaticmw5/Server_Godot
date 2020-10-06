@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-class AuthCore : Core
+class ChatCore : Core
 {
-	public new Dictionary<int, AuthClient> Clients = new Dictionary<int, AuthClient>();
+	public new Dictionary<int, ChatClient> Clients = new Dictionary<int, ChatClient>();
 
 	public override bool AttemptConnection(TcpClient client)
 	{
@@ -25,7 +25,7 @@ class AuthCore : Core
 		try
 		{
 			packet.WriteLength();
-			AuthCore core = (AuthCore)Server.the_core;
+			ChatCore core = (ChatCore)Server.the_core;
 			core.Clients[toClient].tcp.SendData(packet);
 		}
 		catch
@@ -37,19 +37,17 @@ class AuthCore : Core
 	public override void InitializePackets()
 	{
 		for (int i = 1; i <= Config.MaxPlayers; i++)
-			Clients.Add(i, new AuthClient(i));
+			Clients.Add(i, new ChatClient(i));
 
 		main_thread_packets = new Dictionary<int, PacketHandler>()
 		{
-			{(int)Packet.ClientPackets.pong, Pong.HandlePong },
-			{(int)Packet.ClientPackets.authenticate, Authentication.Authenticate },
-			{(int)Packet.ClientPackets.enterMap, Authentication.EnterMap },
+			{(int)Packet.ClientPackets.pong, ChatHandler.HandleConnect },
 		};
 	}
 
 	public new static string GetClientIP(int clientId)
 	{
-		AuthCore core = (AuthCore)Server.the_core;
+		ChatCore core = (ChatCore)Server.the_core;
 		return core.Clients[clientId].tcp.socket.Client.RemoteEndPoint.ToString();
 	}
 }

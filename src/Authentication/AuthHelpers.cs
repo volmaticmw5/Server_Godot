@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-class AuthHelpers
+public class AuthHelpers
 {
 	public static async Task<int> GetAidFromLoginPassword(int fromClient, string user, string password)
 	{
@@ -24,7 +24,10 @@ class AuthHelpers
 
 		Int32.TryParse(result.Rows[0]["id"].ToString(), out int aid);
 		if (aid <= 0)
+		{
 			SendAuthFailed(fromClient);
+			return -1;
+		}
 
 		return aid;
 	}
@@ -67,18 +70,20 @@ class AuthHelpers
 
 	public static void SetSessionIDtoClient(int client, int aid)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		Random rnd1 = new Random(MathHelp.TimestampSeconds());
 		Random rnd2 = new Random(rnd1.Next(1, Int32.MaxValue) + aid);
 		int nSessionId = rnd2.Next(1, Int32.MaxValue);
-		AuthCore.Clients[client].setSessionId(nSessionId);
+		core.Clients[client].setSessionId(nSessionId);
 	}
 
 	public static async void CreateSessionInDatabase(int client, int aid)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		List<MySqlParameter> sessParams = new List<MySqlParameter>()
 		{
-			MySQL_Param.Parameter("?session", AuthCore.Clients[client].session_id),
-			MySQL_Param.Parameter("?pid", AuthCore.Clients[client].session_id), // as a temporary pid
+			MySQL_Param.Parameter("?session", core.Clients[client].session_id),
+			MySQL_Param.Parameter("?pid", core.Clients[client].session_id), // as a temporary pid
 			MySQL_Param.Parameter("?aid", aid)
 		};
 		await Server.DB.QueryAsync("INSERT INTO [[player]].sessions (session,pid,aid) VALUES (?session,?pid,?aid)", sessParams);
@@ -86,10 +91,11 @@ class AuthHelpers
 
 	public static void SendCharacterSelectionDataToClient(int client, CharacterSelectionEntry[] characters)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		using (Packet nPacket = new Packet((int)Packet.ServerPackets.charSelection))
 		{
 			nPacket.Write(client);
-			nPacket.Write(AuthCore.Clients[client].session_id);
+			nPacket.Write(core.Clients[client].session_id);
 			for (int i = 0; i < Config.MaxCharactersInAccount; i++)
 				nPacket.Write(characters[i]);
 
@@ -118,14 +124,15 @@ class AuthHelpers
 
 	public static async void SendDisconnectPacketToAlreadyConnectedClient(int client)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		bool isOnline = false;
-		foreach (KeyValuePair<int, AuthClient> c in AuthCore.Clients)
+		foreach (KeyValuePair<int, AuthClient> cc in core.Clients)
 		{
-			if (c.Value.tcp != null && c.Value != AuthCore.Clients[client])
+			if (cc.Value.tcp != null && cc.Value != core.Clients[client])
 			{
-				if (c.Value.tcp.socket != null)
+				if (cc.Value.tcp.socket != null)
 				{
-					if (c.Value.tcp.socket.Connected)
+					if (cc.Value.tcp.socket.Connected)
 					{
 						isOnline = true;
 						// send a disconnect packet
@@ -140,7 +147,7 @@ class AuthHelpers
 		{
 			List<MySqlParameter> delSess = new List<MySqlParameter>()
 			{
-				MySQL_Param.Parameter("?id", AuthCore.Clients[client].aid),
+				MySQL_Param.Parameter("?id", core.Clients[client].aid),
 			};
 			await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `aid`=?id LIMIT 1", delSess);
 		}
@@ -148,6 +155,7 @@ class AuthHelpers
 
 	public static async Task<bool> AccountOwnsPlayer(int cid, int pid)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		List<MySqlParameter> _params = new List<MySqlParameter>()
 		{
 			MySQL_Param.Parameter("?id", pid),
@@ -162,7 +170,7 @@ class AuthHelpers
 		if (aid <= 0 || _pid < 0)
 			return false;
 
-		if (AuthCore.Clients[cid].aid != aid)
+		if (core.Clients[cid].aid != aid)
 			return false;
 
 		return true;
@@ -180,10 +188,11 @@ class AuthHelpers
 
 	public static async Task<int> AssignPidToSession(DataTable rows, int cid)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		Int32.TryParse(rows.Rows[0]["map"].ToString(), out int map);
 		List<MySqlParameter> sParams = new List<MySqlParameter>()
 		{
-			MySQL_Param.Parameter("?session", AuthCore.Clients[cid].session_id),
+			MySQL_Param.Parameter("?session", core.Clients[cid].session_id),
 			MySQL_Param.Parameter("?pid", rows.Rows[0]["id"].ToString()),
 			MySQL_Param.Parameter("?aid", rows.Rows[0]["aid"].ToString())
 		};
@@ -193,6 +202,7 @@ class AuthHelpers
 
 	public static void MakeClientConnectToGameServer(DataTable result, int cid)
 	{
+		AuthCore core = (AuthCore)Server.the_core;
 		Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
 		Int32.TryParse(result.Rows[0]["id"].ToString(), out int pid);
 
@@ -203,19 +213,19 @@ class AuthHelpers
 				using (Packet nPacket = new Packet((int)Packet.ServerPackets.goToServerAt))
 				{
 					nPacket.Write(cid);
-					nPacket.Write(AuthCore.Clients[cid].session_id);
+					nPacket.Write(core.Clients[cid].session_id);
 					nPacket.Write(server.addr);
 					nPacket.Write(server.port);
 					AuthCore.SendTCPData(cid, nPacket);
 				}
 
-				Logger.Syslog($"Client #{cid} is entering map #{map} on the server labeled '{server.label}' with pid #{pid} with a session id of {AuthCore.Clients[cid].session_id}...");
+				Logger.Syslog($"Client #{cid} is entering map #{map} on the server labeled '{server.label}' with pid #{pid} with a session id of {((AuthCore)Server.the_core).Clients[cid].session_id}...");
 				break;
 			}
 			else
 			{
 				Logger.Syslog($"[ALERT] Client #{cid} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
-				AuthCore.Clients[cid].tcp.Disconnect();
+				core.Clients[cid].tcp.Disconnect();
 				return;
 			}
 		}

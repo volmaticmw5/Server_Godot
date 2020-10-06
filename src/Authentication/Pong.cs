@@ -23,7 +23,7 @@ class Pong
 			else
 			{
 				Logger.Syslog($"Invalid client pong received, disconnecting client #{id}");
-				AuthCore.Clients[id].tcp.Disconnect();
+				Server.the_core.Clients[id].tcp.Disconnect();
 			}
 		}
 	}

@@ -37,7 +37,7 @@ public class Security
         return passwordHash.SequenceEqual(passwordHash);
     }
 
-    internal static bool ReceivedIdMatchesClientId(int id, int fromClient)
+    public static bool ReceivedIdMatchesClientId(int id, int fromClient)
     {
         if (id == fromClient)
             return true;
@@ -47,35 +47,39 @@ public class Security
 
     public static bool Validate(int id, int fromClient, int session_id)
     {
-        if (!ValidateGamePacket(id, fromClient, session_id))
+        if (!ValidatePacket(id, fromClient, session_id))
         {
             Logger.Syslog($"Client #{id} failed to get validated and will be disconnected.");
-            Core.Clients[fromClient].tcp.Disconnect();
+            Server.the_core.Clients[fromClient].tcp.Disconnect();
             return false;
         }
 
         return true;
     }
 
-    internal static bool ValidateAuthPacket(int id, int fromClient, int session_id)
+    private static bool ValidatePacket(int cid, int fromClient, int session_id)
     {
-        if (id != fromClient)
+        if(Config.Type == ServerTypes.Authentication)
+        {
+            AuthCore core = ((AuthCore)Server.the_core);
+            if (cid != fromClient)
+                return false;
+            if (core.Clients == null)
+                return false;
+            if (core.Clients[fromClient] == null)
+                return false;
+            if (core.Clients[fromClient].session_id != session_id)
+                return false;
+            return true;
+        }
+            
+        if (cid != fromClient)
             return false;
-        if (AuthCore.Clients[fromClient] == null)
+        if (Server.the_core.Clients == null)
             return false;
-        if (AuthCore.Clients[fromClient].session_id != session_id)
+        if (Server.the_core.Clients[fromClient] == null)
             return false;
-
-        return true;
-    }
-
-    internal static bool ValidateGamePacket(int id, int fromClient, int session_id)
-    {
-        if (id != fromClient)
-            return false;
-        if (Core.Clients[fromClient] == null)
-            return false;
-        if (Core.Clients[fromClient].session_id != session_id)
+        if (Server.the_core.Clients[fromClient].session_id != session_id)
             return false;
 
         return true;
@@ -85,8 +89,8 @@ public class Security
     {
         List<MySqlParameter> sessParams = new List<MySqlParameter>()
         {
-            MySQL_Param.Parameter("?session", Core.Clients[cid].session_id),
-            MySQL_Param.Parameter("?aid", Core.Clients[cid].aid)
+            MySQL_Param.Parameter("?session", Server.the_core.Clients[cid].session_id),
+            MySQL_Param.Parameter("?aid", Server.the_core.Clients[cid].aid)
         };
         DataTable result = await Server.DB.QueryAsync("SELECT COUNT(*) as count FROM [[player]].sessions WHERE `session`=?session AND `aid`=?aid LIMIT 1", sessParams);
         Int32.TryParse(result.Rows[0]["count"].ToString(), out int count);
