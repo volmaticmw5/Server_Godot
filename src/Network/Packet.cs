@@ -16,7 +16,8 @@ public class Packet : IDisposable
 		warpTo,
 		alreadyConnected,
 		playersInMap,
-		chatConnect
+		chatInfo,
+		chatConnect,
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -26,7 +27,7 @@ public class Packet : IDisposable
 		authenticate,
 		enterMap,
 		itsme,
-		myPosition
+		playerBroadcast
 	}
 
 	private List<byte> buffer;
@@ -199,6 +200,28 @@ public class Packet : IDisposable
 		Write(entry.pid);
 		Write(entry.name);
 		Write(entry.isValidCharacter);
+	}
+
+	/// <summary>
+	/// Writes a playerdata object to the packet
+	/// </summary>
+	/// <param name="data"></param>
+	public void Write(PlayerData data)
+	{
+		Write(data.pid);
+		Write(data.aid);
+		Write(data.sid);
+		Write(data.name);
+		Write(data.level);
+		Write(data.map);
+		Write((int)data.sex);
+		Write((int)data.race);
+		Write(data.pos.X);
+		Write(data.pos.Y);
+		Write(data.pos.Z);
+		Write(data.heading);
+		Write(data.stats.attackSpeed);
+		Write(data.stats.movementSpeed);
 	}
 	#endregion
 
@@ -413,6 +436,34 @@ public class Packet : IDisposable
 		{
 			Logger.Syslog("Failed to read a packet of type string");
 			return "";
+		}
+	}
+
+	public PlayerData ReadPlayerData(bool _moveReadPos = true)
+	{
+		try
+		{
+			int pid = ReadInt();
+			int aid = ReadInt();
+			int sid = ReadInt();
+			string name = ReadString();
+			int level = ReadInt();
+			int map = ReadInt();
+			Sexes sex = (Sexes)ReadInt();
+			Races race = (Races)ReadInt();
+			float x = ReadFloat();
+			float y = ReadFloat();
+			float z = ReadFloat();
+			int heading = ReadInt();
+			int attSpeed = ReadInt();
+			int movSpeed = ReadInt();
+			PlayerStats stats = new PlayerStats(movSpeed, attSpeed);
+
+			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats);
+		}
+		catch
+		{
+			throw new Exception("Could not read value of type 'PlayerData'!");
 		}
 	}
 	#endregion

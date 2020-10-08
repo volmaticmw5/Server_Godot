@@ -16,42 +16,75 @@ class Map
 
     public void Update()
     {
-        // Send every player on this map a list of player data near them
+        UpdateClientsOfOtherPlayers();
+    }
+
+    private void UpdateClientsOfOtherPlayers()
+    {
         foreach (KeyValuePair<int, Client> client in Server.the_core.Clients)
         {
-            if (client.Value.player == null)
-                continue;
-            if (client.Value.player.map != this.id)
+            if (!isPlayerValid(client.Value))
                 continue;
 
-            // Go through all the players on this map, if they're close enough, send data to this client
-            string data = "";
-            foreach (KeyValuePair<int, Client> other in Server.the_core.Clients)
+            List<PlayerData> players = GetOtherPlayersDataNearThisPlayer(client.Value);
+            SendThisPlayerOtherPlayersData(client.Value.cid, players.ToArray());
+        }
+    }
+
+    private List<PlayerData> GetOtherPlayersDataNearThisPlayer(Client targetClient)
+    {
+        List<PlayerData> data = new List<PlayerData>();
+        foreach (KeyValuePair<int, Client> other in Server.the_core.Clients)
+        {
+            if (!isPlayerValid(other.Value))
+                continue;
+            if (other.Value.player.pid == targetClient.player.pid)
+                continue;
+
+            if (Vector3.Distance(targetClient.player.pos, other.Value.player.pos) < Config.ViewDistance)
             {
-                if (other.Value.player == null)
-                    continue;
+                Player otherPlayer = other.Value.player;
+                PlayerData otherPlayerData = new PlayerData(
+                    otherPlayer.pid, 
+                    otherPlayer.aid, 
+                    otherPlayer.session, 
+                    otherPlayer.name, 
+                    otherPlayer.level, 
+                    otherPlayer.map, 
+                    otherPlayer.sex, 
+                    otherPlayer.race, 
+                    otherPlayer.pos,
+                    otherPlayer.heading,
+                    otherPlayer.stats);
 
-                if (other.Value.player.pid == client.Value.player.pid)
-                    continue;
-
-                if (other.Value.player.map == this.id)
-                {
-                    if(Vector3.Distance(client.Value.player.pos, other.Value.player.pos) < Config.ViewDistance)
-                    {
-                        data += $"{other.Value.player.pid};{((int)other.Value.player.race).ToString()};{((int)other.Value.player.sex).ToString()};{other.Value.player.name};{other.Value.player.pos.X.ToString()};{other.Value.player.pos.Y.ToString()};{other.Value.player.pos.Z.ToString()}/end/";
-                    }
-                }
-            }
-
-            // Send the packet even if there's no data since the client will only send us their position upon receiving this!
-            using (Packet packet = new Packet((int)Packet.ServerPackets.playersInMap))
-            {
-                packet.Write(client.Value.cid);
-                packet.Write(data);
-
-                Core.SendTCPData(client.Value.cid, packet);
+                data.Add(otherPlayerData);
             }
         }
+
+        return data;
+    }
+
+    private void SendThisPlayerOtherPlayersData(int cid, PlayerData[] players)
+    {
+        using (Packet packet = new Packet((int)Packet.ServerPackets.playersInMap))
+        {
+            packet.Write(cid);
+            packet.Write(players.Length);
+            foreach (PlayerData data in players)
+                packet.Write(data);
+
+            Core.SendTCPData(cid, packet);
+        }
+    }
+
+    private bool isPlayerValid(Client client)
+    {
+        if (client.player == null)
+            return false;
+        if (client.player.map != this.id)
+            return false;
+
+        return true;
     }
 }
 

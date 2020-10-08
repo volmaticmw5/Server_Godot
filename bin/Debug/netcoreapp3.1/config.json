@@ -16,6 +16,8 @@
   "DatabasePlayerDb": "player",
   "DatabaseLogDb": "log",
   "ViewDistance": 40.0,
+  "ChatAddr": "127.0.0.1",
+  "ChatPort": 56000,
   "Maps": [
     {
       "id": 1,

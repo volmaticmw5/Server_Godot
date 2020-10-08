@@ -44,6 +44,8 @@ class ConfigStructure
     public string DatabasePlayerDb;
     public string DatabaseLogDb;
     public float ViewDistance;
+    public string ChatAddr;
+    public int ChatPort;
     public GameServer[] GameServers;
     public MapStruct[] Maps;
 }
@@ -67,6 +69,8 @@ class Config
     public static string DatabasePlayerDb;
     public static string DatabaseLogDb;
     public static float ViewDistance;
+    public static string ChatAddr;
+    public static int ChatPort;
     public static GameServer[] GameServers;
     public static MapStruct[] Maps;
 
@@ -97,6 +101,8 @@ class Config
                     DatabasePlayerDb = json.DatabasePlayerDb;
                     DatabaseLogDb = json.DatabaseLogDb;
                     ViewDistance = json.ViewDistance;
+                    ChatAddr = json.ChatAddr;
+                    ChatPort = json.ChatPort;
                     try
                     {
                         GameServers = json.GameServers;

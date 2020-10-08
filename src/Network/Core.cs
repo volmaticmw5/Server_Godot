@@ -59,7 +59,7 @@ class Core
 
 		map_thread_packets = new Dictionary<int, PacketHandler>()
 		{
-			{(int)Packet.ClientPackets.myPosition, PlayerManager.HandlePositionUpdate },
+			{(int)Packet.ClientPackets.playerBroadcast, PlayerManager.HandlePlayerBroadcast },
 		};
 	}
 

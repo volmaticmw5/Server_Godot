@@ -143,6 +143,7 @@ class TCP
 
         if (client.player != null)
             client.player.Dispose();
+        client.CleanUp();
 
         if (socket != null)
             socket.Close();

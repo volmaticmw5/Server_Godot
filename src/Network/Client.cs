@@ -33,4 +33,11 @@ class Client
     {
         this.session_id = val;
     }
+
+    public virtual void CleanUp()
+    {
+        this.player = null;
+        this.aid = -1;
+        this.session_id = -1;
+    }
 }

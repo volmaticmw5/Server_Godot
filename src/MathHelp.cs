@@ -17,6 +17,14 @@ class MathHelp
         return new Vector2(retX, retY);
     }
 
+    public static Vector3 Lerp(Vector3 from, Vector3 to, float by)
+    {
+        float retX = Lerp(from.X, to.X, by);
+        float retY = Lerp(from.Y, to.Y, by);
+        float retZ = Lerp(from.Z, to.Z, by);
+        return new Vector3(retX, retY, retZ);
+    }
+
     public static int TimestampSeconds()
     {
         return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
