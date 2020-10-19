@@ -18,6 +18,10 @@
   "ViewDistance": 40.0,
   "ChatAddr": "127.0.0.1",
   "ChatPort": 56000,
+  "LocalePath": "locale/",
+  "QuestsPath": "locale/quests/",
+  "MaxStackItems": 200,
+  "EpochStart": 1602866284595,
   "Maps": [
     {
       "id": 1,

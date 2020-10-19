@@ -25,6 +25,15 @@ class MathHelp
         return new Vector3(retX, retY, retZ);
     }
 
+    public static long LongRandom(long min, long max, Random rand)
+    {
+        byte[] buf = new byte[8];
+        rand.NextBytes(buf);
+        long longRand = BitConverter.ToInt64(buf, 0);
+
+        return (Math.Abs(longRand % (max - min)) + min);
+    }
+
     public static int TimestampSeconds()
     {
         return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;

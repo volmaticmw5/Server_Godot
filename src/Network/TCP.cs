@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-class TCP
+public class TCP
 {
     public static readonly int buffer_size = 524;
     public Client client;

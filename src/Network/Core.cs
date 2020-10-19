@@ -24,6 +24,17 @@ class Core
 		socket.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
 	}
 
+	public int getClientFromPid(int pid)
+	{
+		for (int i = 1; i < Clients.Count; i++)
+		{
+			if (Clients[i].player != null)
+				if (Clients[i].player.pid == pid)
+					return i;
+		}
+		return -1;
+	}
+
 	public void TCPConnectCallback(IAsyncResult ar)
 	{
 		TcpClient client = socket.EndAcceptTcpClient(ar);
@@ -55,6 +66,9 @@ class Core
 		main_thread_packets = new Dictionary<int, PacketHandler>()
 		{
 			{(int)Packet.ClientPackets.itsme, PlayerManager.NewConnectingPlayer },
+			{(int)Packet.ClientPackets.chatMsg, ChatHandler.HandleIncomingMessage },
+			{(int)Packet.ClientPackets.playerInstancedSignal, PlayerManager.PlayerInstancedSignal },
+			{(int)Packet.ClientPackets.itemChangePosition, ItemManager.ChangeItemPosition },
 		};
 
 		map_thread_packets = new Dictionary<int, PacketHandler>()

@@ -16,8 +16,8 @@ public class Packet : IDisposable
 		warpTo,
 		alreadyConnected,
 		playersInMap,
-		chatInfo,
-		chatConnect,
+		chatCb,
+		updateInventory
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -27,7 +27,10 @@ public class Packet : IDisposable
 		authenticate,
 		enterMap,
 		itsme,
-		playerBroadcast
+		playerInstancedSignal,
+		playerBroadcast,
+		chatMsg,
+		itemChangePosition
 	}
 
 	private List<byte> buffer;
@@ -222,6 +225,20 @@ public class Packet : IDisposable
 		Write(data.heading);
 		Write(data.stats.attackSpeed);
 		Write(data.stats.movementSpeed);
+	}
+
+	public void Write(Item data)
+	{
+		Write(data.iid);
+		Write(data.data);
+		Write(data.count);
+		Write((int)data.window);
+		Write(data.position);
+	}
+
+	public void Write(ItemData data)
+	{
+		Write(data.vnum);
 	}
 	#endregion
 
@@ -449,8 +466,8 @@ public class Packet : IDisposable
 			string name = ReadString();
 			int level = ReadInt();
 			int map = ReadInt();
-			Sexes sex = (Sexes)ReadInt();
-			Races race = (Races)ReadInt();
+			PLAYER_SEXES sex = (PLAYER_SEXES)ReadInt();
+			PLAYER_RACES race = (PLAYER_RACES)ReadInt();
 			float x = ReadFloat();
 			float y = ReadFloat();
 			float z = ReadFloat();

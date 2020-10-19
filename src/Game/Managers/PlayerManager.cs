@@ -38,7 +38,6 @@ class PlayerManager
 		PlayerData pdata = await GetPlayerData(fromClient, accountData);
 		AssignPlayerDataToClient(fromClient, pdata);
 		SendInitializePlayerPacket(fromClient, pdata);
-		ChatHandler.SendChatInfoPacket(fromClient);
 	}
 
 	private static async Task<int[]> AssignTargetSessionToClientAndGetAccountData(int client, int sid)
@@ -91,8 +90,9 @@ class PlayerManager
 			else
 				stats = JsonConvert.DeserializeObject<PlayerStats>(rawStats);
 
-
-			Player player = new Player(Server.the_core.Clients[client], sid, pid, aid, level, (Sexes)sex, (Races)race, pos, heading, stats);
+			Player player = new Player(Server.the_core.Clients[client], sid, pid, aid, level, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats);
+			Inventory inventory = await Inventory.BuildInventory(player);
+			player.AssignInventory(inventory);
 			Server.the_core.Clients[client].setPlayer(player);
 			return true;
 		} catch { return false; }
@@ -134,7 +134,7 @@ class PlayerManager
 		else
 			stats = JsonConvert.DeserializeObject<PlayerStats>(rawStats);
 
-		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (Sexes)sex, (Races)race, new Vector3(x, y, z), heading, stats);
+		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats);
 		return nData;
 	}
 
@@ -152,5 +152,15 @@ class PlayerManager
 			pck.Write(data);
 			Core.SendTCPData(client, pck);
 		}
+	}
+
+	public static void PlayerInstancedSignal(int fromClient, Packet packet)
+	{
+		int cid = packet.ReadInt();
+		int sid = packet.ReadInt();
+		if (!Security.Validate(cid, fromClient, sid))
+			return;
+
+		Server.the_core.Clients[fromClient].player.UpdateClientInventory();
 	}
 }

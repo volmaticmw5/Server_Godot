@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Numerics;
 using System.Text;
 
-class Client
+public class Client
 {
     public int aid;
     public int cid;

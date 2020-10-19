@@ -20,6 +20,9 @@ class Server
     private static bool SetupServerForInitialization()
     {
         if (!Config.TryReadConfigFiles()) return false;
+        if (!Config.TryReadMobData()) return false;
+        if (!Config.TryReadGroupData()) return false;
+        if (!Config.TryReadItemData()) return false;
         if (!TryConnectToDatabase()) return false;
         return true;
     }
@@ -48,8 +51,6 @@ class Server
             Server.the_core = new AuthCore();
         else if (Config.Type == ServerTypes.Game)
             Server.the_core = new Core();
-        else if (Config.Type == ServerTypes.Chat)
-            Server.the_core = new ChatCore();
 
         Logger.Syslog($"{Config.Type.ToString()} server started on port {Config.Port}");
     }

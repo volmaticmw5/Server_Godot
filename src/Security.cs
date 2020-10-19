@@ -99,4 +99,16 @@ public class Security
 
         return SessionErrorCodes.VALID;
     }
+
+    public static async Task<bool> isGM(int pid)
+    {
+        List<MySqlParameter> _params = new List<MySqlParameter>()
+        {
+            MySQL_Param.Parameter("?pid", pid),
+        };
+        DataTable result = await Server.DB.QueryAsync("SELECT COUNT(*) as count FROM [[player]].PLAYER WHERE `id`=?pid LIMIT 1", _params);
+        if (result.Rows[0]["count"].ToString() == "1")
+            return true;
+        return false;
+    }
 }

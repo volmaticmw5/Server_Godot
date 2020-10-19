@@ -5,20 +5,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-public enum Races
-{
-    HUMAN = 1,
-    INFECTED = 2,
-    ORCS = 3
-}
-
-public enum Sexes
-{
-    MALE = 1,
-    FEMALE = 1
-}
-
-class Player
+public class Player
 {
     public int session;
     public string name;
@@ -26,14 +13,15 @@ class Player
     public int aid;
     public int map;
     public int level;
-    public Sexes sex;
-    public Races race;
+    public PLAYER_SEXES sex;
+    public PLAYER_RACES race;
     public Vector3 pos;
     public int heading;
     public Client client;
     public PlayerStats stats;
+    public Inventory inventory { get; private set; }
 
-    public Player(Client _client, int _session, int _pid, int _aid, int _level, Sexes _sex, Races _race, Vector3 _pos, int _heading, PlayerStats _stats)
+    public Player(Client _client, int _session, int _pid, int _aid, int _level, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats)
     {
         this.client = _client;
         this.session = _session;
@@ -47,6 +35,11 @@ class Player
         this.heading = _heading;
     }
     ~Player() { }
+
+    public void AssignInventory(Inventory inv)
+    {
+        this.inventory = inv;
+    }
 
     public async void Dispose()
     {
@@ -64,6 +57,8 @@ class Player
         };
         await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map, `stats`=?stats WHERE `id`=?pid LIMIT 1", dumpParams);
 
+        inventory.Flush();
+
         List<MySqlParameter> _params = new List<MySqlParameter>()
         {
             MySQL_Param.Parameter("?session", session),
@@ -78,5 +73,16 @@ class Player
     {
         this.pos = newPos;
         this.heading = newHeading;
+    }
+
+    public void UpdateClientInventory()
+    {
+        using (Packet pck = new Packet((int)Packet.ServerPackets.updateInventory))
+        {
+            pck.Write(inventory.items.Count);
+            for (int i = 0; i < inventory.items.Count; i++)
+                pck.Write(inventory.items[i]);
+            Core.SendTCPData(client.cid, pck);
+        }
     }
 }

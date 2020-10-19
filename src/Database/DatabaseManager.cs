@@ -198,4 +198,30 @@ class DatabaseManager
         }
         return null;
     }
+
+    public long QuerySyncReturnAI(string query, List<MySqlParameter> parameters)
+    {
+        // Sanitize 
+        query = query.Replace("[[account]]", Config.DatabaseAccountDb);
+        query = query.Replace("[[player]]", Config.DatabasePlayerDb);
+        query = query.Replace("[[log]]", Config.DatabaseLogDb);
+
+        DataTable result = new DataTable();
+        try
+        {
+            MySqlCommand cmd = new MySqlCommand(query, Server.DB.GetSuitableConnection());
+
+            foreach (MySqlParameter param in parameters)
+                cmd.Parameters.Add(param);
+
+            cmd.ExecuteNonQuery();
+            long id = cmd.LastInsertedId;
+            return id;
+        }
+        catch (MySqlException ex)
+        {
+            Logger.Syslog($"[MYSQL] {ex.Message}");
+        }
+        return -1;
+    }
 }
