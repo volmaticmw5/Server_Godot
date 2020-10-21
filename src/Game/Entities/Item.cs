@@ -10,7 +10,13 @@ public class Item
     {
         NONE,
         INVENTORY,
-        STORAGE
+        STORAGE,
+        EQUIPABLES
+    }
+
+    public enum EQUIPABLES_POSITIONS
+    {
+        WEAPON = 1,
     }
 
     public long iid { get; private set; }
@@ -47,6 +53,69 @@ public class Item
             MySQL_Param.Parameter("?pos", this.position)
         };
         this.iid = Server.DB.QuerySyncReturnAI("INSERT INTO [[player]].item (`vnum`,`owner`,`window`,`count`,`pos`) VALUES (?vnum,?owner,?window,?count,?pos)", _params);
+    }
+
+    private bool isUsable()
+    {
+        if (this.data.type == ITEM_TYPES.NONE)
+            return false;
+
+        return true;
+    }
+
+    public void Use()
+    {
+        if (!isUsable())
+            return;
+
+        int cid = Server.the_core.getClientFromPid(ownerPid);
+        if (this.data.type == ITEM_TYPES.USE_ITEM)
+        {
+            Logger.Syslog($"Use item of subtype {this.data.sub_type}");
+        }
+        else if(this.data.type == ITEM_TYPES.WEAPON || this.data.type == ITEM_TYPES.ARMOR)
+        {
+            if(this.window == WINDOW.INVENTORY)
+                equip();
+            else if(this.window == WINDOW.EQUIPABLES)
+                dequip();
+        }
+    }
+
+    private void equip()
+    {
+        int cid = Server.the_core.getClientFromPid(ownerPid);
+        if (Server.the_core.Clients[cid].player.inventory.hasEquipped(this.data.type))
+        {
+            ChatHandler.sendLocalChatMessage(cid, "You are already equipped with this type of item.");
+            return;
+        }
+
+        this.window = WINDOW.EQUIPABLES;
+        if (this.data.type == ITEM_TYPES.WEAPON)
+            this.position = 1;
+        if (this.data.type == ITEM_TYPES.ARMOR)
+            this.position = 2;
+
+        Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
+        Server.the_core.Clients[cid].player.UpdateClientInventory();
+        Server.the_core.Clients[cid].player.UpdateStats();
+    }
+
+    private void dequip()
+    {
+        int cid = Server.the_core.getClientFromPid(ownerPid);
+        if(!Server.the_core.Clients[cid].player.inventory.canFit(this.data.vnum))
+        {
+            ChatHandler.sendLocalChatMessage(cid, "You have no free space for this.");
+            return;
+        }
+
+        this.window = WINDOW.INVENTORY;
+        this.position = Server.the_core.Clients[cid].player.inventory.getAppropriateWindowPositionForItem(window, this.data.vnum);
+        Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
+        Server.the_core.Clients[cid].player.UpdateClientInventory();
+        Server.the_core.Clients[cid].player.UpdateStats();
     }
 
     public async void Flush()

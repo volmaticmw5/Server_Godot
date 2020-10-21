@@ -22,7 +22,7 @@ public class Inventory
     {
         Item[] items = await getPlayerInventoryFromDatabase(owner.pid);
         Inventory nInv = new Inventory(owner, items);
-        nInv.updateInventoryMatrix();
+        nInv.UpdateMatrix();
         return nInv;
     }
 
@@ -32,7 +32,7 @@ public class Inventory
             items[i].Flush();
     }
 
-    public void updateInventoryMatrix()
+    public void UpdateMatrix()
     {
         int[,] newInventoryMatrix = new int[inventory_slots.GetLength(0), inventory_slots.GetLength(1)];
         int pos = 1;
@@ -63,6 +63,26 @@ public class Inventory
         }
 
         inventory_slots = newInventoryMatrix;
+    }
+
+    public bool hasEquipped(ITEM_TYPES type)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].window == Item.WINDOW.EQUIPABLES && items[i].data.type == type)
+                return true;
+        }
+        return false;
+    }
+
+    public Item getItemAtPosition(int pos, Item.WINDOW window)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].window == window && items[i].position == pos)
+                return items[i];
+        }
+        return null;
     }
 
     public bool canFit(int vnum)
@@ -120,6 +140,10 @@ public class Inventory
     public int getAppropriateWindowPositionForItem(Item.WINDOW window, int vnum)
     {
         int pos = 1;
+
+        if(window == Item.WINDOW.EQUIPABLES)
+            return 999;
+
         for (int y = 0; y < inventory_slots.GetLength(1); y++)
         {
             for (int x = 0; x < inventory_slots.GetLength(0); x++)
@@ -177,7 +201,7 @@ public class Inventory
 
         Item nItem = new Item(owner.pid, window, newPos, Config.Items[vnum], -1, count);
         items.Add(nItem);
-        updateInventoryMatrix();
+        UpdateMatrix();
         ChatHandler.sendLocalChatMessage(owner.client.cid, $"You have received x{count} {Config.Items[vnum].name}");
     }
 
@@ -189,7 +213,7 @@ public class Inventory
             MySQL_Param.Parameter("?pid", pid),
             
         };
-        DataTable rows = await Server.DB.QueryAsync("SELECT * FROM [[player]].item WHERE `owner`=?pid AND `window`='INVENTORY'", _params);
+        DataTable rows = await Server.DB.QueryAsync("SELECT * FROM [[player]].item WHERE `owner`=?pid AND (`window`='INVENTORY' OR `window`='EQUIPABLES')", _params);
         for (int i = 0; i < rows.Rows.Count; i++)
         {
             long.TryParse(rows.Rows[i]["id"].ToString(), out long iid);
@@ -223,65 +247,97 @@ public class Inventory
         {
             if(items[i].iid == iid)
             {
-                if(slotOccupied(newPos, items[i].data.size, window)) 
+                if(window != items[i].window)
                 {
-                    Item toMoveItem = items[i];
-                    Item itemInTargetSlot = null;
-                    for (int x = 0; x < items.Count; x++)
-                    {
-                        if(items[x].data.size == 2)
-                        {
-                            if (items[x].position == newPos || items[x].position == (newPos - inventory_slots.GetLength(0)) || items[x].position == (newPos + inventory_slots.GetLength(0)))
-                            {
-                                itemInTargetSlot = items[x];
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            if (items[x].position == newPos)
-                            {
-                                itemInTargetSlot = items[x];
-                                break;
-                            }
-                        }
-                    }
-
-                    if (itemInTargetSlot == null)
+                    if (slotOccupied(newPos, items[i].data.size, window))
                         return;
 
-                    if (toMoveItem.iid == itemInTargetSlot.iid)
-                    {
-                        if(items[i].position != newPos)
-                            items[i].position = newPos;
-                        updateInventoryMatrix();
-                        owner.UpdateClientInventory();
-                    }
-                    else
-                    {
-                        if(toMoveItem.data.size == itemInTargetSlot.data.size)
-                        {
-                            itemInTargetSlot.position = items[i].position;
-                            items[i].position = newPos;
-                            updateInventoryMatrix();
-                            owner.UpdateClientInventory();
-                        }
-                        else
-                        {
-                            ChatHandler.sendLocalChatMessage(owner.client.cid, "You can't use this item here.");
-                            //TODO :: USE THIS FOR ADDING BONUSES TO ITEMS AND STUFF
-                        }
-                    }
+                    items[i].window = window;
+                    items[i].position = newPos;
+                    UpdateMatrix();
+                    owner.UpdateClientInventory();
                 }
                 else
                 {
-                    items[i].position = newPos;
-                    updateInventoryMatrix();
-                    owner.UpdateClientInventory();
+                    if (slotOccupied(newPos, items[i].data.size, window))
+                    {
+                        Item toMoveItem = items[i];
+                        Item itemInTargetSlot = null;
+                        for (int x = 0; x < items.Count; x++)
+                        {
+                            if (items[x].data.size == 2)
+                            {
+                                if (items[x].position == newPos || items[x].position == (newPos - inventory_slots.GetLength(0)) || items[x].position == (newPos + inventory_slots.GetLength(0)))
+                                {
+                                    itemInTargetSlot = items[x];
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                if (items[x].position == newPos)
+                                {
+                                    itemInTargetSlot = items[x];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (itemInTargetSlot == null)
+                            return;
+
+                        if (toMoveItem.iid == itemInTargetSlot.iid)
+                        {
+                            if (items[i].position != newPos)
+                                items[i].position = newPos;
+                            UpdateMatrix();
+                            owner.UpdateClientInventory();
+                            owner.UpdateStats();
+                        }
+                        else
+                        {
+                            if (toMoveItem.data.size == itemInTargetSlot.data.size)
+                            {
+                                itemInTargetSlot.position = items[i].position;
+                                items[i].position = newPos;
+                                UpdateMatrix();
+                                owner.UpdateClientInventory();
+                                owner.UpdateStats();
+                            }
+                            else
+                            {
+                                ChatHandler.sendLocalChatMessage(owner.client.cid, "You can't use this item here.");
+                                //TODO :: USE THIS FOR ADDING BONUSES TO ITEMS AND STUFF
+                            }
+                        }
+                    }
+                    else
+                    {
+                        items[i].position = newPos;
+                        UpdateMatrix();
+                        owner.UpdateClientInventory();
+                        owner.UpdateStats();
+                    }
                 }
+
                 return;
             }
         }
+    }
+
+    public void UseItemAtPosition(int pos, Item.WINDOW window)
+    {
+        Item targetItem = getItemAtPosition(pos, window);
+        if (targetItem == null)
+            return;
+
+        if(targetItem.data.type == ITEM_TYPES.NONE)
+        {
+            ChatHandler.sendLocalChatMessage(owner.client.cid, "This item can't be used.");
+            return;
+        }
+
+        targetItem.Use();
     }
 
     public void RemoveItem(long iid, int count)
@@ -293,7 +349,7 @@ public class Inventory
             {
                 if (items[i].count - count <= 0)
                 {
-                    updateInventoryMatrix();
+                    UpdateMatrix();
                     items[i].window = Item.WINDOW.NONE;
                     items[i].position = 0;
 
@@ -324,7 +380,7 @@ public class Inventory
                     if (items[i].count - count <= 0)
                     {
                         remainer = count - items[i].count;
-                        updateInventoryMatrix();
+                        UpdateMatrix();
                         items[i].window = Item.WINDOW.NONE;
                         items[i].position = 0;
                         current.Remove(items[i]);
@@ -341,7 +397,7 @@ public class Inventory
                 {
                     if (items[i].count - remainer <= 0)
                     {
-                        updateInventoryMatrix();
+                        UpdateMatrix();
                         items[i].window = Item.WINDOW.NONE;
                         items[i].position = 0;
 

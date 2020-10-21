@@ -6,6 +6,7 @@ public enum ITEM_TYPES
 {
     NONE,
     WEAPON,
+    ARMOR,
     USE_ITEM
 }
 

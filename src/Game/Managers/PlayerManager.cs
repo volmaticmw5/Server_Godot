@@ -83,13 +83,7 @@ class PlayerManager
 			Vector3 pos = new Vector3(x, y, z);
 			Int32.TryParse(pResult.Rows[0]["h"].ToString(), out int heading);
 
-			PlayerStats stats;
-			string rawStats = pResult.Rows[0]["stats"].ToString();
-			if (rawStats == "" || rawStats == null)
-				stats = new PlayerStats();
-			else
-				stats = JsonConvert.DeserializeObject<PlayerStats>(rawStats);
-
+			PlayerStats stats = new PlayerStats();
 			Player player = new Player(Server.the_core.Clients[client], sid, pid, aid, level, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats);
 			Inventory inventory = await Inventory.BuildInventory(player);
 			player.AssignInventory(inventory);
@@ -127,13 +121,7 @@ class PlayerManager
 		Int32.TryParse(rows.Rows[0]["race"].ToString(), out int race);
 		Int32.TryParse(rows.Rows[0]["level"].ToString(), out int level);
 
-		PlayerStats stats;
-		string rawStats = rows.Rows[0]["stats"].ToString();
-		if (rawStats == "" || rawStats == null)
-			stats = new PlayerStats();
-		else
-			stats = JsonConvert.DeserializeObject<PlayerStats>(rawStats);
-
+		PlayerStats stats = new PlayerStats();
 		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats);
 		return nData;
 	}
@@ -162,5 +150,6 @@ class PlayerManager
 			return;
 
 		Server.the_core.Clients[fromClient].player.UpdateClientInventory();
+		Server.the_core.Clients[fromClient].player.UpdateStats();
 	}
 }

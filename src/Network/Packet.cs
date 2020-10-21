@@ -30,7 +30,8 @@ public class Packet : IDisposable
 		playerInstancedSignal,
 		playerBroadcast,
 		chatMsg,
-		itemChangePosition
+		itemChangePosition,
+		itemUse
 	}
 
 	private List<byte> buffer;
@@ -225,6 +226,8 @@ public class Packet : IDisposable
 		Write(data.heading);
 		Write(data.stats.attackSpeed);
 		Write(data.stats.movementSpeed);
+		Write(data.stats.pAttack);
+		Write(data.stats.mAttack);
 	}
 
 	public void Write(Item data)
@@ -472,9 +475,11 @@ public class Packet : IDisposable
 			float y = ReadFloat();
 			float z = ReadFloat();
 			int heading = ReadInt();
-			int attSpeed = ReadInt();
-			int movSpeed = ReadInt();
-			PlayerStats stats = new PlayerStats(movSpeed, attSpeed);
+			float attSpeed = ReadFloat();
+			float movSpeed = ReadFloat();
+			float pAttack = ReadFloat();
+			float mAttack = ReadFloat();
+			PlayerStats stats = new PlayerStats(movSpeed, attSpeed, pAttack, mAttack);
 
 			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats);
 		}

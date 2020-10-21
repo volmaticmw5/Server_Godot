@@ -44,8 +44,6 @@ class ConfigStructure
     public string DatabasePlayerDb;
     public string DatabaseLogDb;
     public float ViewDistance;
-    public string ChatAddr;
-    public int ChatPort;
     public string LocalePath;
     public string QuestsPath;
     public int MaxStackItems;
@@ -73,8 +71,6 @@ class Config
     public static string DatabasePlayerDb;
     public static string DatabaseLogDb;
     public static float ViewDistance;
-    public static string ChatAddr;
-    public static int ChatPort;
     public static string LocalePath;
     public static string QuestsPath;
     public static int MaxStackItems;
@@ -114,8 +110,6 @@ class Config
                     DatabasePlayerDb = json.DatabasePlayerDb;
                     DatabaseLogDb = json.DatabaseLogDb;
                     ViewDistance = json.ViewDistance;
-                    ChatAddr = json.ChatAddr;
-                    ChatPort = json.ChatPort;
                     LocalePath = json.LocalePath;
                     QuestsPath = json.QuestsPath;
                     MaxStackItems = json.MaxStackItems;

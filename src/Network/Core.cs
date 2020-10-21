@@ -69,6 +69,7 @@ class Core
 			{(int)Packet.ClientPackets.chatMsg, ChatHandler.HandleIncomingMessage },
 			{(int)Packet.ClientPackets.playerInstancedSignal, PlayerManager.PlayerInstancedSignal },
 			{(int)Packet.ClientPackets.itemChangePosition, ItemManager.ChangeItemPosition },
+			{(int)Packet.ClientPackets.itemUse, ItemManager.ItemUse },
 		};
 
 		map_thread_packets = new Dictionary<int, PacketHandler>()

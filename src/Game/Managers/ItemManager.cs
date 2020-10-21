@@ -63,7 +63,20 @@ public class ItemManager
         }
 
         player.UpdateClientInventory();
+        player.UpdateStats();
         return 0;
+    }
+
+    public static void ItemUse(int fromClient, Packet packet)
+    {
+        int cid = packet.ReadInt();
+        int sid = packet.ReadInt();
+        int pos = packet.ReadInt();
+        int window = packet.ReadInt();
+        if (!Security.Validate(cid, fromClient, sid))
+            return;
+
+        Server.the_core.Clients[cid].player.inventory.UseItemAtPosition(pos, (Item.WINDOW)window);
     }
 
     public static void ChangeItemPosition(int fromClient, Packet packet)
@@ -85,6 +98,7 @@ public class ItemManager
             player.inventory.RemoveItem(iid, count);
         }
         player.UpdateClientInventory();
+        player.UpdateStats();
     }
 
     public static void RemoveItemFromPlayer(Player player, int id, int count)
@@ -94,5 +108,6 @@ public class ItemManager
             player.inventory.RemoveItem(id, count);
         }
         player.UpdateClientInventory();
+        player.UpdateStats();
     }
 }

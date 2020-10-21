@@ -53,9 +53,8 @@ public class Player
             MySQL_Param.Parameter("?z", this.pos.Z.ToString("0.000")),
             MySQL_Param.Parameter("?h", this.heading),
             MySQL_Param.Parameter("?map", this.map),
-            MySQL_Param.Parameter("?stats", statsRaw),
         };
-        await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map, `stats`=?stats WHERE `id`=?pid LIMIT 1", dumpParams);
+        await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map WHERE `id`=?pid LIMIT 1", dumpParams);
 
         inventory.Flush();
 
@@ -84,5 +83,78 @@ public class Player
                 pck.Write(inventory.items[i]);
             Core.SendTCPData(client.cid, pck);
         }
+    }
+
+    public void UpdateStats()
+    {
+        float moveSpeed = 1.0f;
+        float attackSpeed = 1.0f;
+        float pAttack = 1.0f;
+        float mAttack = 1.0f;
+
+        for (int i = 0; i < inventory.items.Count; i++)
+        {
+            if(inventory.items[i].window == Item.WINDOW.EQUIPABLES)
+            {
+                if (inventory.items[i].data.bonus_type0 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value0;
+                if (inventory.items[i].data.bonus_type0 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value0;
+                if (inventory.items[i].data.bonus_type0 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value0;
+                if (inventory.items[i].data.bonus_type0 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value0;
+
+                if (inventory.items[i].data.bonus_type1 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value1;
+                if (inventory.items[i].data.bonus_type1 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value1;
+                if (inventory.items[i].data.bonus_type1 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value1;
+                if (inventory.items[i].data.bonus_type1 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value1;
+
+                if (inventory.items[i].data.bonus_type2 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value2;
+                if (inventory.items[i].data.bonus_type2 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value2;
+                if (inventory.items[i].data.bonus_type2 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value2;
+                if (inventory.items[i].data.bonus_type2 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value2;
+
+                if (inventory.items[i].data.bonus_type3 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value3;
+                if (inventory.items[i].data.bonus_type3 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value3;
+                if (inventory.items[i].data.bonus_type3 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value3;
+                if (inventory.items[i].data.bonus_type3 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value3;
+
+                if (inventory.items[i].data.bonus_type4 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value4;
+                if (inventory.items[i].data.bonus_type4 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value4;
+                if (inventory.items[i].data.bonus_type4 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value4;
+                if (inventory.items[i].data.bonus_type4 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value4;
+
+                if (inventory.items[i].data.bonus_type5 == BONUS_TYPE.ATT_SPEED)
+                    attackSpeed += inventory.items[i].data.bonus_value5;
+                if (inventory.items[i].data.bonus_type5 == BONUS_TYPE.MOVE_SPEED)
+                    moveSpeed += inventory.items[i].data.bonus_value5;
+                if (inventory.items[i].data.bonus_type5 == BONUS_TYPE.P_ATTACK)
+                    pAttack += inventory.items[i].data.bonus_value5;
+                if (inventory.items[i].data.bonus_type5 == BONUS_TYPE.M_ATTACK)
+                    mAttack += inventory.items[i].data.bonus_value5;
+            }
+        }
+
+        this.stats.movementSpeed = moveSpeed;
+        this.stats.attackSpeed = attackSpeed;
+        this.stats.pAttack = pAttack;
+        this.stats.mAttack = mAttack;
     }
 }

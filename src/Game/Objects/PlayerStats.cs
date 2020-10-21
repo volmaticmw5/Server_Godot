@@ -4,12 +4,16 @@ using System.Text;
 
 public class PlayerStats
 {
-    public int movementSpeed;
-    public int attackSpeed;
+    public float movementSpeed;
+    public float attackSpeed;
+    public float pAttack;
+    public float mAttack;
 
-    public PlayerStats(int _movementSpeed = 10, int _attackSpeed = 1)
+    public PlayerStats(float _movementSpeed = 1f, float _attackSpeed = 1f, float _pAttack = 1f, float _mAttack = 1f)
     {
         this.movementSpeed = _movementSpeed;
         this.attackSpeed = _attackSpeed;
+        this.pAttack = _pAttack;
+        this.mAttack = _mAttack;
     }
 }
