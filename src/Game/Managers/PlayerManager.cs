@@ -14,11 +14,10 @@ class PlayerManager
         int cid = packet.ReadInt();
         int sid = packet.ReadInt();
 		PlayerData pdata = packet.ReadPlayerData();
+		bool attacking = packet.ReadBool();
         
         if (Security.Validate(cid, fromClient, sid))
-        {
-            Server.the_core.Clients[fromClient].player.UpdatePosition(pdata.pos, pdata.heading);
-        }
+            Server.the_core.Clients[fromClient].player.UpdatePosition(pdata.pos, pdata.heading, attacking);
     }
 
     public static async void NewConnectingPlayer(int fromClient, Packet packet)
@@ -122,7 +121,7 @@ class PlayerManager
 		Int32.TryParse(rows.Rows[0]["level"].ToString(), out int level);
 
 		PlayerStats stats = new PlayerStats();
-		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats);
+		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false);
 		return nData;
 	}
 
@@ -130,7 +129,7 @@ class PlayerManager
 	{
 		Server.the_core.Clients[client].player.name = data.name;
 		Server.the_core.Clients[client].player.map = data.map;
-		Server.the_core.Clients[client].player.UpdatePosition(data.pos, data.heading);
+		Server.the_core.Clients[client].player.UpdatePosition(data.pos, data.heading, false);
 	}
 
 	private static void SendInitializePlayerPacket(int client, PlayerData data)

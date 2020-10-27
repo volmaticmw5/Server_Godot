@@ -25,20 +25,16 @@
   "Maps": [
     {
       "id": 1,
-      "name": "Map one"
+      "name": "Map one",
+      "width": 512,
+      "height": 512
     },
     {
       "id": 2,
-      "name": "Map two"
+      "name": "Map two",
+      "width": 512,
+      "height": 512
     },
-    {
-      "id": 3,
-      "name": "Map three"
-    },
-    {
-      "id": 4,
-      "name": "Map four"
-    }
   ], // For game server only
 
   // Only used by the authentication server

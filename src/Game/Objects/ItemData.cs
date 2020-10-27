@@ -57,6 +57,10 @@ public class ItemData
     public BONUS_TYPE bonus_type5;
     public float bonus_value5;
 
+    // SPECIFIC FOR WEAPONS, MAY NOT BE IN USE
+    public float pDamage;
+    public float mDamage;
+
     public ItemData(int id, string name, int level, PLAYER_RACES[] races, int size, bool _stacks, ITEM_TYPES type, ITEM_SUB_TYPES sub_type, BONUS_TYPE bonus_type0, float bonus_value0, BONUS_TYPE bonus_type1, float bonus_value1, BONUS_TYPE bonus_type2, float bonus_value2, BONUS_TYPE bonus_type3, float bonus_value3, BONUS_TYPE bonus_type4, float bonus_value4, BONUS_TYPE bonus_type5, float bonus_value5)
     {
         this.vnum = id;
@@ -79,5 +83,34 @@ public class ItemData
         this.bonus_value4 = bonus_value4;
         this.bonus_type5 = bonus_type5;
         this.bonus_value5 = bonus_value5;
+
+        if(type == ITEM_TYPES.WEAPON)
+        {
+            if (bonus_type0 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value0;
+            if (bonus_type1 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value1;
+            if (bonus_type2 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value2;
+            if (bonus_type3 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value3;
+            if (bonus_type4 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value4;
+            if (bonus_type5 == BONUS_TYPE.P_ATTACK)
+                this.pDamage = bonus_value5;
+
+            if (bonus_type0 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value0;
+            if (bonus_type1 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value1;
+            if (bonus_type2 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value2;
+            if (bonus_type3 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value3;
+            if (bonus_type4 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value4;
+            if (bonus_type5 == BONUS_TYPE.M_ATTACK)
+                this.mDamage = bonus_value5;
+        }
     }
 }

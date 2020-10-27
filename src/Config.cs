@@ -23,6 +23,8 @@ struct MapStruct
 {
     public int id;
     public string name;
+    public int width;
+    public int height;
 }
 
 class ConfigStructure
@@ -204,14 +206,19 @@ class Config
                 string[] line_contents = lines[l].Split('\t');
                 Int32.TryParse(line_contents[0].ToString(), out int id);
                 string name = line_contents[1];
-                float.TryParse(line_contents[2].ToString(), out float movSpeed);
-                float.TryParse(line_contents[3].ToString(), out float attSpeed);
-                float.TryParse(line_contents[4].ToString(), out float pAttack);
-                float.TryParse(line_contents[5].ToString(), out float mAttack);
-                float.TryParse(line_contents[6].ToString(), out float pDef);
-                float.TryParse(line_contents[7].ToString(), out float mDef);
+                MOB_WALK_TYPE walk_type = (MOB_WALK_TYPE)Enum.Parse(typeof(MOB_WALK_TYPE), line_contents[2]);
+                float wander_radius = float.Parse(line_contents[3].ToString());
+                Int32.TryParse(line_contents[4].ToString(), out int wanderWait);
+                float.TryParse(line_contents[5].ToString(), out float maxHp);
+                float.TryParse(line_contents[6].ToString(), out float hpRegen);
+                float.TryParse(line_contents[7].ToString(), out float movSpeed);
+                float.TryParse(line_contents[8].ToString(), out float attSpeed);
+                float.TryParse(line_contents[9].ToString(), out float pAttack);
+                float.TryParse(line_contents[10].ToString(), out float mAttack);
+                float.TryParse(line_contents[11].ToString(), out float pDef);
+                float.TryParse(line_contents[12].ToString(), out float mDef);
 
-                MobStats nStats = new MobStats(attSpeed, movSpeed, pAttack, mAttack, pDef, mDef);
+                MobStats nStats = new MobStats(walk_type, wander_radius, wanderWait, maxHp, hpRegen, attSpeed, movSpeed, pAttack, mAttack, pDef, mDef);
                 MobData nData = new MobData(id, name, nStats);
                 mobs[id] = nData;
             }

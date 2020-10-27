@@ -20,6 +20,8 @@ public class Player
     public Client client;
     public PlayerStats stats;
     public Inventory inventory { get; private set; }
+    public bool attacking;
+    private Item itemEquipped;
 
     public Player(Client _client, int _session, int _pid, int _aid, int _level, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats)
     {
@@ -68,10 +70,11 @@ public class Player
         Logger.Syslog($"Player with session id {session} dumped and destroyed.");
     }
 
-    public void UpdatePosition(Vector3 newPos, int newHeading)
+    public void UpdatePosition(Vector3 newPos, int newHeading, bool attacking)
     {
         this.pos = newPos;
         this.heading = newHeading;
+        this.attacking = attacking;
     }
 
     public void UpdateClientInventory()
@@ -91,10 +94,17 @@ public class Player
         float attackSpeed = 1.0f;
         float pAttack = 1.0f;
         float mAttack = 1.0f;
+        bool foundWeapon = false;
 
         for (int i = 0; i < inventory.items.Count; i++)
         {
-            if(inventory.items[i].window == Item.WINDOW.EQUIPABLES)
+            if (inventory.items[i].window == Item.WINDOW.EQUIPABLES && inventory.items[i].data.type == ITEM_TYPES.WEAPON)
+            {
+                itemEquipped = inventory.items[i];
+                foundWeapon = true;
+            }
+
+            if (inventory.items[i].window == Item.WINDOW.EQUIPABLES)
             {
                 if (inventory.items[i].data.bonus_type0 == BONUS_TYPE.ATT_SPEED)
                     attackSpeed += inventory.items[i].data.bonus_value0;
@@ -152,9 +162,20 @@ public class Player
             }
         }
 
+        if (!foundWeapon)
+            this.itemEquipped = null;
+
         this.stats.movementSpeed = moveSpeed;
         this.stats.attackSpeed = attackSpeed;
         this.stats.pAttack = pAttack;
         this.stats.mAttack = mAttack;
+    }
+
+    public float calcHitDamage(float pDef, float mDef)
+    {
+        if (this.itemEquipped == null)
+            return 0;
+
+        return (itemEquipped.data.pDamage - pDef) + (itemEquipped.data.mDamage - mDef);
     }
 }

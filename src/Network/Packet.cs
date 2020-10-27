@@ -16,8 +16,9 @@ public class Packet : IDisposable
 		warpTo,
 		alreadyConnected,
 		playersInMap,
+		mobsInMap,
 		chatCb,
-		updateInventory
+		updateInventory,
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -31,7 +32,8 @@ public class Packet : IDisposable
 		playerBroadcast,
 		chatMsg,
 		itemChangePosition,
-		itemUse
+		itemUse,
+		weaponHit
 	}
 
 	private List<byte> buffer;
@@ -228,6 +230,16 @@ public class Packet : IDisposable
 		Write(data.stats.movementSpeed);
 		Write(data.stats.pAttack);
 		Write(data.stats.mAttack);
+		Write(data.attacking);
+	}
+
+	public void Write(Mob data)
+	{
+		Write(data.mid);
+		Write(data.data.id);
+		Write(data.currentHp);
+		Write(data.data.stats.maxHp);
+		Write(data.position);
 	}
 
 	public void Write(Item data)
@@ -480,8 +492,9 @@ public class Packet : IDisposable
 			float pAttack = ReadFloat();
 			float mAttack = ReadFloat();
 			PlayerStats stats = new PlayerStats(movSpeed, attSpeed, pAttack, mAttack);
+			bool attacking = ReadBool();
 
-			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats);
+			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats, attacking);
 		}
 		catch
 		{

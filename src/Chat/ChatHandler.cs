@@ -107,28 +107,32 @@ class ChatHandler
 
 	private static void processItemCmd(int client, string msg)
 	{
-		string[] args = msg.Split(' ');
-		if (args[1] == "")
+		try
 		{
-			sendMissingArguments(client, "/i <vnum> <count>");
-			return;
-		}
-		Int32.TryParse(args[1], out int vnum);
-		if (!ItemManager.VnumExists(vnum))
-		{
-			sendInvalidArgument(client, "/i <vnum> <count>");
-			return;
-		}
+			string[] args = msg.Split(' ');
+			if (args[1] == "")
+			{
+				sendMissingArguments(client, "/i <vnum> <count>");
+				return;
+			}
+			Int32.TryParse(args[1], out int vnum);
+			if (!ItemManager.VnumExists(vnum))
+			{
+				sendInvalidArgument(client, "/i <vnum> <count>");
+				return;
+			}
 
-		int count = 1;
-		if (args.Length > 2)
-		{
-			Int32.TryParse(args[2], out count);
-		}
+			int count = 1;
+			if (args.Length > 2)
+			{
+				Int32.TryParse(args[2], out count);
+			}
 
-		int res = ItemManager.AddItemToPlayer(Server.the_core.Clients[client].player, Item.WINDOW.INVENTORY, vnum, count);
-		if (res == -1)
-			sendLocalChatMessage(client, "You can't carry all of this.");
+			int res = ItemManager.AddItemToPlayer(Server.the_core.Clients[client].player, Item.WINDOW.INVENTORY, vnum, count);
+			if (res == -1)
+				sendLocalChatMessage(client, "You can't carry all of this.");
+		}
+		catch { sendLocalChatMessage(client, "Invalid command."); }
 	}
 
 	private static void sendNotEnoughPermissions(int client)

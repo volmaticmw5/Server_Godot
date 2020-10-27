@@ -29,8 +29,9 @@ public class PlayerData
 	public Vector3 pos;
 	public int heading;
 	public PlayerStats stats;
+	public bool attacking;
 
-	public PlayerData(int _pid, int _aid, int _sid, string _name, int _level, int _map, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats)
+	public PlayerData(int _pid, int _aid, int _sid, string _name, int _level, int _map, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats, bool _attacking)
 	{
 		this.pid = _pid;
 		this.aid = _aid;
@@ -43,5 +44,6 @@ public class PlayerData
 		this.pos = _pos;
 		this.stats = _stats;
 		this.heading = _heading;
+		this.attacking = _attacking;
 	}
 }

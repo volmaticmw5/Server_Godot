@@ -70,6 +70,7 @@ class Core
 			{(int)Packet.ClientPackets.playerInstancedSignal, PlayerManager.PlayerInstancedSignal },
 			{(int)Packet.ClientPackets.itemChangePosition, ItemManager.ChangeItemPosition },
 			{(int)Packet.ClientPackets.itemUse, ItemManager.ItemUse },
+			{(int)Packet.ClientPackets.weaponHit, ItemManager.HandleWeaponHit },
 		};
 
 		map_thread_packets = new Dictionary<int, PacketHandler>()

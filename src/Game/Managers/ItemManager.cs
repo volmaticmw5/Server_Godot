@@ -110,4 +110,20 @@ public class ItemManager
         player.UpdateClientInventory();
         player.UpdateStats();
     }
+
+    public static void HandleWeaponHit(int fromClient, Packet packet)
+    {
+        int cid = packet.ReadInt();
+        int sid = packet.ReadInt();
+        int mid = packet.ReadInt();
+        if (!Security.Validate(cid, fromClient, sid))
+            return;
+
+        Map targetMap = MapManager.getMapById(Server.the_core.Clients[cid].player.map);
+        Mob targetMob = targetMap.getMobByMid(mid);
+        if (targetMob == null)
+            return;
+        float damage = Server.the_core.Clients[cid].player.calcHitDamage(targetMob.data.stats.pDefense, targetMob.data.stats.mDefense);
+        targetMob.receiveDamage(damage);
+    }
 }
