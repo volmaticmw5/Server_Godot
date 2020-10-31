@@ -5,22 +5,18 @@ using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 
-class DatabaseAction
+class DatabaseActionUndefined
 {
-    public int clientId;
     public string Query;
-    public Action<int, DataTable> ReturnMethod;
     public List<MySqlParameter> parameters;
 
-    public DatabaseAction(string query, int clientId, List<MySqlParameter> parameters, Action<int, DataTable> returnMethod)
+    public DatabaseActionUndefined(string query, List<MySqlParameter> parameters)
     {
-        this.clientId = clientId;
         this.Query = query;
         this.parameters = parameters;
-        this.ReturnMethod = returnMethod;
     }
 
-    public async void ExecuteQuery(int client)
+    public async void ExecuteQuery()
     {
         DataTable result = new DataTable();
         try
@@ -30,17 +26,7 @@ class DatabaseAction
             foreach (MySqlParameter param in parameters)
                 cmd.Parameters.Add(param);
 
-            if (ReturnMethod != null)
-            {
-                using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
-                    da.Fill(result);
-
-                ReturnMethod(client, result);
-            }
-            else
-            {
-                await Task.Run(() => QueryAsync(cmd));
-            }
+             Task.Run(() => QueryAsync(cmd));
         }
         catch (MySqlException ex)
         {

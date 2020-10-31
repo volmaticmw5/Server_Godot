@@ -30,7 +30,7 @@ class AuthCore : Core
 		}
 		catch
 		{
-			Logger.Syslog($"Failed to send data to client #{toClient}");
+			Logger.Syserr($"Failed to send data to client #{toClient}");
 		}
 	}
 

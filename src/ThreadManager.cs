@@ -13,13 +13,18 @@ class ThreadManager
 	private static readonly List<Action> executeCopiedOnMapThread = new List<Action>();
 	private static bool actionToExecuteOnMapThread = false;
 
+	// Player Thread
+	private static readonly List<Action> executeOnPlayerThread = new List<Action>();
+	private static readonly List<Action> executeCopiedOnPlayerThread = new List<Action>();
+	private static bool actionToExecuteOnPlayerThread = false;
+
 	/// <summary>Sets an action to be executed on the main thread.</summary>
 	/// <param name="_action">The action to be executed on the main thread.</param>
 	public static void ExecuteOnMainThread(Action _action)
 	{
 		if (_action == null)
 		{
-			Logger.Syslog("No action to execute on main thread!");
+			Logger.Syserr("No action to execute on main thread!");
 			return;
 		}
 
@@ -56,7 +61,7 @@ class ThreadManager
 	{
 		if (_action == null)
 		{
-			Logger.Syslog("No action to execute on main thread!");
+			Logger.Syserr("No action to execute on main thread!");
 			return;
 		}
 
@@ -83,6 +88,25 @@ class ThreadManager
 			for (int i = 0; i < executeCopiedOnMapThread.Count; i++)
 			{
 				executeCopiedOnMapThread[i]();
+			}
+		}
+	}
+
+    public static void UpdatePlayerThread()
+    {
+		if (actionToExecuteOnPlayerThread)
+		{
+			executeCopiedOnPlayerThread.Clear();
+			lock (executeOnPlayerThread)
+			{
+				executeCopiedOnMapThread.AddRange(executeOnPlayerThread);
+				executeOnPlayerThread.Clear();
+				actionToExecuteOnPlayerThread = false;
+			}
+
+			for (int i = 0; i < executeCopiedOnPlayerThread.Count; i++)
+			{
+				executeCopiedOnPlayerThread[i]();
 			}
 		}
 	}

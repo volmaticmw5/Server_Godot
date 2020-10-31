@@ -13,6 +13,8 @@ public class Player
     public int aid;
     public int map;
     public int level;
+    public float hp;
+    public float mana;
     public PLAYER_SEXES sex;
     public PLAYER_RACES race;
     public Vector3 pos;
@@ -35,8 +37,23 @@ public class Player
         this.level = _level;
         this.pos = _pos;
         this.heading = _heading;
+        this.hp = 1000000000f;
+        this.mana = 100f;
     }
     ~Player() { }
+
+    public void Update()
+    {
+        if(isAlive())
+        {
+            doHealthRegen();
+        }
+    }
+
+    private void doHealthRegen()
+    {
+        //this.hp++; // todo
+    }
 
     public void AssignInventory(Inventory inv)
     {
@@ -70,6 +87,42 @@ public class Player
         Logger.Syslog($"Player with session id {session} dumped and destroyed.");
     }
 
+    public void receiveDamage(float damage)
+    {
+        this.hp -= damage;
+        if (this.hp <= 0)
+            die();
+
+        sendDamageSignalToClient((int)damage);
+    }
+
+    private void sendDamageSignalToClient(int dmg)
+    {
+        using (Packet pck = new Packet((int)Packet.ServerPackets.damageSignal))
+        {
+            pck.Write(dmg);
+            Core.SendTCPData(client.cid, pck);
+        }
+    }
+
+    private void die()
+    {
+        //send death status to client
+        Logger.Syslog("i ded");
+    }
+
+    private void respawn()
+    {
+        UpdateStats();
+        this.hp = this.stats.maxHp / 4;
+        this.mana = this.stats.maxMana / 4.5f;
+    }
+
+    public bool isAlive()
+    {
+        return this.hp > 0f;
+    }
+
     public void UpdatePosition(Vector3 newPos, int newHeading, bool attacking)
     {
         this.pos = newPos;
@@ -94,6 +147,8 @@ public class Player
         float attackSpeed = 1.0f;
         float pAttack = 1.0f;
         float mAttack = 1.0f;
+        float mHp = 100.0f;
+        float mMn = 100.0f;
         bool foundWeapon = false;
 
         for (int i = 0; i < inventory.items.Count; i++)
@@ -169,6 +224,8 @@ public class Player
         this.stats.attackSpeed = attackSpeed;
         this.stats.pAttack = pAttack;
         this.stats.mAttack = mAttack;
+        this.stats.maxHp = mHp;
+        this.stats.maxMana = mMn;
     }
 
     public float calcHitDamage(float pDef, float mDef)

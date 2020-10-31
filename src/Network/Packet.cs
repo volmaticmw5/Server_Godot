@@ -19,6 +19,7 @@ public class Packet : IDisposable
 		mobsInMap,
 		chatCb,
 		updateInventory,
+		damageSignal,
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -231,6 +232,12 @@ public class Packet : IDisposable
 		Write(data.stats.pAttack);
 		Write(data.stats.mAttack);
 		Write(data.attacking);
+		Write(data.hp);
+		Write(data.mana);
+		Write(data.stats.maxHp);
+		Write(data.stats.maxMana);
+		Write(data.stats.pDefense);
+		Write(data.stats.mDefense);
 	}
 
 	public void Write(Mob data)
@@ -240,6 +247,11 @@ public class Packet : IDisposable
 		Write(data.currentHp);
 		Write(data.data.stats.maxHp);
 		Write(data.position);
+		if (data.focus != null)
+			Write(data.focus.pid);
+		else
+			Write(0);
+		Write(data.gid);
 	}
 
 	public void Write(Item data)
@@ -275,7 +287,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type byte");
+			Logger.Syserr("Failed to read a packet of type byte");
 			return 0;
 		}
 	}
@@ -312,7 +324,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type byte[]");
+			Logger.Syserr("Failed to read a packet of type byte[]");
 			return null;
 		}
 	}
@@ -334,7 +346,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type short");
+			Logger.Syserr("Failed to read a packet of type short");
 			return 0;
 		}
 	}
@@ -356,7 +368,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type double");
+			Logger.Syserr("Failed to read a packet of type double");
 			return 0;
 		}
 	}
@@ -378,7 +390,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type int");
+			Logger.Syserr("Failed to read a packet of type int");
 			return 0;
 		}
 	}
@@ -400,7 +412,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type long");
+			Logger.Syserr("Failed to read a packet of type long");
 			return 0;
 		}
 	}
@@ -422,7 +434,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type float");
+			Logger.Syserr("Failed to read a packet of type float");
 			return 0;
 		}
 	}
@@ -444,7 +456,7 @@ public class Packet : IDisposable
 		}
 		else
 		{
-			Logger.Syslog("Failed to read a packet of type bool");
+			Logger.Syserr("Failed to read a packet of type bool");
 			return false;
 		}
 	}
@@ -466,7 +478,7 @@ public class Packet : IDisposable
 		}
 		catch
 		{
-			Logger.Syslog("Failed to read a packet of type string");
+			Logger.Syserr("Failed to read a packet of type string");
 			return "";
 		}
 	}
@@ -491,14 +503,21 @@ public class Packet : IDisposable
 			float movSpeed = ReadFloat();
 			float pAttack = ReadFloat();
 			float mAttack = ReadFloat();
-			PlayerStats stats = new PlayerStats(movSpeed, attSpeed, pAttack, mAttack);
 			bool attacking = ReadBool();
+			float hp = ReadFloat();
+			float mana = ReadFloat();
+			float maxHp = ReadFloat();
+			float maxMana = ReadFloat();
+			float pDef = ReadFloat();
+			float mDef = ReadFloat();
 
-			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats, attacking);
+			PlayerStats stats = new PlayerStats(movSpeed, attSpeed, pAttack, mAttack, maxHp, maxMana, pDef, mDef);
+			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats, attacking, hp, mana);
 		}
 		catch
 		{
-			throw new Exception("Could not read value of type 'PlayerData'!");
+			Logger.Syserr("Could not read value of type 'PlayerData'!");
+			return null;
 		}
 	}
 	#endregion

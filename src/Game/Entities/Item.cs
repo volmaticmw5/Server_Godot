@@ -72,6 +72,7 @@ public class Item
         if (this.data.type == ITEM_TYPES.USE_ITEM)
         {
             Logger.Syslog($"Use item of subtype {this.data.sub_type}");
+            Logger.ItemLog(this.data.vnum, this.iid, "USE");
         }
         else if(this.data.type == ITEM_TYPES.WEAPON || this.data.type == ITEM_TYPES.ARMOR)
         {
@@ -100,6 +101,7 @@ public class Item
         Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
         Server.the_core.Clients[cid].player.UpdateClientInventory();
         Server.the_core.Clients[cid].player.UpdateStats();
+        Logger.ItemLog(this.data.vnum, this.iid, "EQUIP");
     }
 
     private void dequip()
@@ -116,6 +118,7 @@ public class Item
         Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
         Server.the_core.Clients[cid].player.UpdateClientInventory();
         Server.the_core.Clients[cid].player.UpdateStats();
+        Logger.ItemLog(this.data.vnum, this.iid, "DEQUIP");
     }
 
     public async void Flush()
@@ -125,7 +128,7 @@ public class Item
         Int32.TryParse(rows.Rows[0]["count"].ToString(), out int rCount);
         if (rCount == 0)
         {
-            Logger.Syslog("[ERROR] Attempted to flush an item that didn't already exist in the database!");
+            Logger.Syserr("Attempted to flush an item that didn't already exist in the database!");
         }
         else
         {

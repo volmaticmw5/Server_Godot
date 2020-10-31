@@ -30,6 +30,8 @@ struct MapStruct
 class ConfigStructure
 {
     public ServerTypes Type;
+    public bool WriteToConsole;
+    public bool DbLogsEnabled;
     public int Port;
     public int MaxPlayers;
     public int MaxCharactersInAccount;
@@ -57,6 +59,8 @@ class ConfigStructure
 class Config
 {
     public static ServerTypes Type;
+    public static bool WriteToConsole;
+    public static bool DbLogsEnabled;
     public static int Port;
     public static int MaxPlayers = 9999;
     public static int MaxCharactersInAccount;
@@ -96,6 +100,8 @@ class Config
                 {
                     ConfigStructure json = JsonConvert.DeserializeObject<ConfigStructure>(raw);
                     Type = json.Type;
+                    WriteToConsole = json.WriteToConsole;
+                    DbLogsEnabled = json.DbLogsEnabled;
                     Port = json.Port;
                     MaxPlayers = json.MaxPlayers;
                     MaxCharactersInAccount = json.MaxCharactersInAccount;
@@ -179,7 +185,7 @@ class Config
 
             Config.MobGroups = group_data.ToArray();
         }
-        catch (Exception e) { Logger.Syslog(e.Message); return false; }
+        catch (Exception e) { Logger.Syserr(e.Message); return false; }
 
         return true;
     }
@@ -217,15 +223,16 @@ class Config
                 float.TryParse(line_contents[10].ToString(), out float mAttack);
                 float.TryParse(line_contents[11].ToString(), out float pDef);
                 float.TryParse(line_contents[12].ToString(), out float mDef);
+                float.TryParse(line_contents[13].ToString(), out float attRange);
 
-                MobStats nStats = new MobStats(walk_type, wander_radius, wanderWait, maxHp, hpRegen, attSpeed, movSpeed, pAttack, mAttack, pDef, mDef);
+                MobStats nStats = new MobStats(walk_type, wander_radius, wanderWait, maxHp, hpRegen, attSpeed, movSpeed, pAttack, mAttack, pDef, mDef, attRange);
                 MobData nData = new MobData(id, name, nStats);
                 mobs[id] = nData;
             }
 
             Config.Mobs = mobs.ToArray();
         }
-        catch(Exception e) { Logger.Syslog(e.Message); return false; }
+        catch(Exception e) { Logger.Syserr(e.Message); return false; }
 
         return true;
     }
@@ -292,7 +299,7 @@ class Config
 
             Config.Items = items.ToArray();
         }
-        catch (Exception e) { Logger.Syslog(e.Message); return false; }
+        catch (Exception e) { Logger.Syserr(e.Message); return false; }
 
         return true;
     }
@@ -311,7 +318,7 @@ class Config
         bool validConfig = Config.ReadConfig();
         if (!validConfig)
         {
-            Logger.Syslog("Server initialization aborted, error reading configuration.");
+            Logger.Syserr("Server initialization aborted, error reading configuration.");
             return false;
         }
         return true;
@@ -322,7 +329,7 @@ class Config
         bool validGroupData = Config.ReadGroupData();
         if(!validGroupData)
         {
-            Logger.Syslog("Server initialization failed, group_data is invalid and could not be parsed.");
+            Logger.Syserr("Server initialization failed, group_data is invalid and could not be parsed.");
             return false;
         }
 
@@ -334,7 +341,7 @@ class Config
         bool validMobData = Config.ReadMobData();
         if (!validMobData)
         {
-            Logger.Syslog("Server initialization failed, mob_data is invalid and could not be parsed.");
+            Logger.Syserr("Server initialization failed, mob_data is invalid and could not be parsed.");
             return false;
         }
 
@@ -346,7 +353,7 @@ class Config
         bool validItemData = Config.ReadItemData();
         if (!validItemData)
         {
-            Logger.Syslog("Server initialization failed, item_data is invalid and could not be parsed.");
+            Logger.Syserr("Server initialization failed, item_data is invalid and could not be parsed.");
             return false;
         }
 

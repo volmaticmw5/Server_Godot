@@ -22,7 +22,7 @@ class Pong
 			}
 			else
 			{
-				Logger.Syslog($"Invalid client pong received, disconnecting client #{id}");
+				Logger.Syserr($"Invalid client pong received, disconnecting client #{id}");
 				Server.the_core.Clients[id].tcp.Disconnect();
 			}
 		}

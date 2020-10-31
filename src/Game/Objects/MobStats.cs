@@ -21,8 +21,9 @@ public class MobStats
     public float mAttack;
     public float pDefense;
     public float mDefense;
+    public float attRange;
 
-    public MobStats(MOB_WALK_TYPE _walk_type, float wander_radius, int wanderWait, float _maxHp, float _hpRegen, float _attSpeed, float _movSpeed, float _pAttack, float _mAttack, float _pDefense, float _mDefense)
+    public MobStats(MOB_WALK_TYPE _walk_type, float wander_radius, int wanderWait, float _maxHp, float _hpRegen, float _attSpeed, float _movSpeed, float _pAttack, float _mAttack, float _pDefense, float _mDefense, float _attRange)
     {
         this.walkType = _walk_type;
         this.wanderRadius = wander_radius;
@@ -35,5 +36,6 @@ public class MobStats
         this.mAttack = _mAttack;
         this.pDefense = _pDefense;
         this.mDefense = _mDefense;
+        this.attRange = _attRange;
     }
 }

@@ -30,8 +30,10 @@ public class PlayerData
 	public int heading;
 	public PlayerStats stats;
 	public bool attacking;
+	public float hp;
+	public float mana;
 
-	public PlayerData(int _pid, int _aid, int _sid, string _name, int _level, int _map, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats, bool _attacking)
+	public PlayerData(int _pid, int _aid, int _sid, string _name, int _level, int _map, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats, bool _attacking, float _hp, float _mana)
 	{
 		this.pid = _pid;
 		this.aid = _aid;
@@ -45,5 +47,7 @@ public class PlayerData
 		this.stats = _stats;
 		this.heading = _heading;
 		this.attacking = _attacking;
+		this.hp = _hp;
+		this.mana = _mana;
 	}
 }

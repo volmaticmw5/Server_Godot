@@ -11,6 +11,7 @@ class DatabaseManager
     private Thread dbThread;
     private bool abort = false;
     private List<DatabaseAction> QueryQueue;
+    private List<DatabaseActionUndefined> QueryUndefQueue;
 
     private MySqlConnection[] ConnectionPool;
     private int lastIdUsed = 0;
@@ -24,6 +25,7 @@ class DatabaseManager
     {
         reconnectAttemptCount = 1;
         QueryQueue = new List<DatabaseAction>();
+        QueryUndefQueue = new List<DatabaseActionUndefined>();
         ConnectionPool = new MySqlConnection[poolSize];
         for (int i = 0; i < poolSize; i++)
             ConnectionPool[i] = new MySqlConnection(@"server=" + Config.DatabaseHost + ";userid=" + Config.DatabaseUser + ";password=" + Config.DatabasePassword + ";database=" + Config.DatabaseDefault + "");
@@ -43,8 +45,8 @@ class DatabaseManager
             try { await ConnectionPool[i].OpenAsync(); Logger.Syslog($"Connected instance ({i}) to the database sucessfully..."); dbConnectedCount++; }
             catch (MySqlException ex)
             {
-                Logger.Syslog($"[MYSQL] Error: {ex.Message}");
-                Logger.Syslog($"[MYSQL] Error connecting to the database (Instance {i}). Will attempt to reconnect.. (Attempt 1/{maxReconnectAttempts})");
+                Logger.Syserr($"Error: {ex.Message}");
+                Logger.Syserr($"Error connecting to the database (Instance {i}). Will attempt to reconnect.. (Attempt 1/{maxReconnectAttempts})");
                 Thread.Sleep(reconnectWait * 1000);
                 _ = Reconnect(i);
             }
@@ -67,12 +69,12 @@ class DatabaseManager
             if (maxReconnectAttempts - 1 == reconnectAttemptCount)
             {
                 reconnectAttemptCount = 1;
-                Logger.Syslog($"[MYSQL] Error connecting to the database (Instance {instanceId}, attempt {maxReconnectAttempts}/{maxReconnectAttempts}).");
+                Logger.Syserr($"Error connecting to the database (Instance {instanceId}, attempt {maxReconnectAttempts}/{maxReconnectAttempts}).");
             }
             else
             {
                 reconnectAttemptCount++;
-                Logger.Syslog($"[MYSQL] Error connecting to the database (Instance {instanceId}). Will attempt to reconnect.. (Attempt {reconnectAttemptCount}/{maxReconnectAttempts})");
+                Logger.Syserr($"Error connecting to the database (Instance {instanceId}). Will attempt to reconnect.. (Attempt {reconnectAttemptCount}/{maxReconnectAttempts})");
                 _ = Reconnect(instanceId);
                 Thread.Sleep(reconnectWait * 1000);
             }
@@ -107,18 +109,24 @@ class DatabaseManager
 
     private void ThreadWork(int tick)
     {
-        Logger.Syslog("[SERVER] Database thread started.");
+        Logger.Syslog("Database thread started.");
         DateTime nextLoop = DateTime.Now;
         while (!abort)
         {
             DatabaseAction[] temp = QueryQueue.ToArray();
+            DatabaseActionUndefined[] tempUndef = QueryUndefQueue.ToArray();
             QueryQueue.Clear();
+            QueryUndefQueue.Clear();
+
             for (int i = 0; i < temp.Length; i++)
                 temp[i].ExecuteQuery(temp[i].clientId);
 
+            for (int i = 0; i < tempUndef.Length; i++)
+                tempUndef[i].ExecuteQuery();
+
             nextLoop = nextLoop.AddMilliseconds(tick);
             if (nextLoop < DateTime.Now)
-                Logger.Syslog($"[SERVER] Database thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
+                Logger.Syserr($"Database thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
 
             if (nextLoop > DateTime.Now)
             {
@@ -156,9 +164,9 @@ class DatabaseManager
         }
         catch (MySqlException ex)
         {
-            Logger.Syslog($"[MYSQL] {ex.Message}");
+            Logger.Syserr($"{ex.Message}");
+            return null;
         }
-        return null;
     }
 
     public void AddQueryToQeue(string query, List<MySqlParameter> parameters, int client, Action<int, DataTable> returnMethod = null)
@@ -170,6 +178,17 @@ class DatabaseManager
         // Add to queue
         DatabaseAction nAction = new DatabaseAction(query, client, parameters, returnMethod);
         QueryQueue.Add(nAction);
+    }
+
+    public void AddQueryToQeueUndefined(string query, List<MySqlParameter> parameters)
+    {
+        // Sanitize 
+        query = query.Replace("[[account]]", Config.DatabaseAccountDb);
+        query = query.Replace("[[player]]", Config.DatabasePlayerDb);
+        query = query.Replace("[[log]]", Config.DatabaseLogDb);
+        // Add to queue
+        DatabaseActionUndefined nAction = new DatabaseActionUndefined(query, parameters);
+        QueryUndefQueue.Add(nAction);
     }
 
     public DataTable QuerySync(string query, List<MySqlParameter> parameters)
@@ -194,7 +213,7 @@ class DatabaseManager
         }
         catch (MySqlException ex)
         {
-            Logger.Syslog($"[MYSQL] {ex.Message}");
+            Logger.Syserr($"{ex.Message}");
         }
         return null;
     }
@@ -220,7 +239,7 @@ class DatabaseManager
         }
         catch (MySqlException ex)
         {
-            Logger.Syslog($"[MYSQL] {ex.Message}");
+            Logger.Syserr($"{ex.Message}");
         }
         return -1;
     }

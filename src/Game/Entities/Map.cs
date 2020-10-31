@@ -56,10 +56,22 @@ public class Map
         }
     }
 
+    public Mob[] getMobsInGroup(int group)
+    {
+        List<Mob> m = new List<Mob>();
+        for (int i = 0; i < mobs.Count; i++)
+        {
+            if ((int)mobs[i].gid == (int)group)
+                m.Add(mobs[i]);
+        }
+
+        return m.ToArray();
+    }
+
     private int generateGroupId()
     {
         Random rnd = new Random();
-        return this.id + (int)MathHelp.TimestampMiliseconds() + rnd.Next(1, Int32.MaxValue);
+        return Math.Abs(this.id + (int)MathHelp.TimestampMiliseconds() + rnd.Next(1, Int32.MaxValue));
     }
 
     private List<NpcSpawnData> getSpawnData()
@@ -212,7 +224,9 @@ public class Map
                     otherPlayer.pos,
                     otherPlayer.heading,
                     otherPlayer.stats,
-                    otherPlayer.attacking);
+                    otherPlayer.attacking,
+                    otherPlayer.hp,
+                    otherPlayer.mana);
 
                 data.Add(otherPlayerData);
             }

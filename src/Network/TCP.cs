@@ -60,7 +60,7 @@ public class TCP
         }
         catch (Exception ex)
         {
-            Logger.Syslog($"Error sending data to the client {cid}: {ex}");
+            Logger.Syserr($"Error sending data to the client {cid}: {ex}");
         }
     }
 
@@ -118,7 +118,7 @@ public class TCP
             }
             else
             {
-                Logger.Syslog($"Received an unknown packet with id of {packetId}");
+                Logger.Syserr($"Received an unknown packet with id of {packetId}");
             }
 
 
@@ -142,7 +142,18 @@ public class TCP
         try { Logger.Syslog($"Client #{client.cid} disconnected ({client.tcp.socket.Client.RemoteEndPoint.ToString()}) Code #{errCode.ToString()}"); } catch { }
 
         if (client.player != null)
+        {
+            // tell mobs that have the player has target to forget about it
+            Map playerMap = MapManager.getMapById(client.player.map);
+            for (int m = 0; m < playerMap.mobs.Count; m++)
+            {
+                if (playerMap.mobs[m].focus == client.player)
+                    playerMap.mobs[m].ClearFocus();
+            }
             client.player.Dispose();
+            client.player = null;
+            Logger.PlayerLog(client.player.pid, "LOGOUT");
+        }
         client.CleanUp();
 
         if (socket != null)

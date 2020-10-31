@@ -88,7 +88,6 @@ public class ItemManager
         Item.WINDOW window = (Item.WINDOW)packet.ReadInt();
         if (!Security.Validate(cid, fromClient, sid))
             return;
-
         Server.the_core.Clients[cid].player.inventory.SwapItemPosition(iid, newPos, window);
     }
 
@@ -124,6 +123,6 @@ public class ItemManager
         if (targetMob == null)
             return;
         float damage = Server.the_core.Clients[cid].player.calcHitDamage(targetMob.data.stats.pDefense, targetMob.data.stats.mDefense);
-        targetMob.receiveDamage(damage);
+        targetMob.receiveDamage(Server.the_core.Clients[cid].player, damage);
     }
 }

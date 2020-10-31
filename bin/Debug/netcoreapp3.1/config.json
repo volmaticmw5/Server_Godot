@@ -1,5 +1,7 @@
 {
   "Type": "Game",
+  "WriteToConsole": true,
+  "DbLogsEnabled": true,
   "Port": 55001,
   "MaxPlayers": 2500,
   "MaxCharactersInAccount": 8,
@@ -34,7 +36,7 @@
       "name": "Map two",
       "width": 512,
       "height": 512
-    },
+    }
   ], // For game server only
 
   // Only used by the authentication server

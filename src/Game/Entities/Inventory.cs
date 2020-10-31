@@ -252,6 +252,7 @@ public class Inventory
                     if (slotOccupied(newPos, items[i].data.size, window))
                         return;
 
+                    Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                     items[i].window = window;
                     items[i].position = newPos;
                     UpdateMatrix();
@@ -288,6 +289,7 @@ public class Inventory
 
                         if (toMoveItem.iid == itemInTargetSlot.iid)
                         {
+                            Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                             if (items[i].position != newPos)
                                 items[i].position = newPos;
                             UpdateMatrix();
@@ -298,6 +300,7 @@ public class Inventory
                         {
                             if (toMoveItem.data.size == itemInTargetSlot.data.size)
                             {
+                                Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                                 itemInTargetSlot.position = items[i].position;
                                 items[i].position = newPos;
                                 UpdateMatrix();
@@ -313,6 +316,7 @@ public class Inventory
                     }
                     else
                     {
+                        Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                         items[i].position = newPos;
                         UpdateMatrix();
                         owner.UpdateClientInventory();

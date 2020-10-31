@@ -48,7 +48,7 @@ class AuthTCP : TCP
         }
         catch (Exception ex)
         {
-            Logger.Syslog($"Error sending data to the client {cid}: {ex}");
+            Logger.Syserr($"Error sending data to the client {cid}: {ex}");
         }
     }
 
@@ -101,7 +101,7 @@ class AuthTCP : TCP
             }
             else
             {
-                Logger.Syslog($"Received an unknown packet with id of {packetId}");
+                Logger.Syserr($"Received an unknown packet with id of {packetId}");
             }
 
 
@@ -128,7 +128,7 @@ class AuthTCP : TCP
             client.setSessionId(-1);
             client.setAID(-1);
         }
-        catch { Logger.Syslog("erroe"); }
+        catch { Logger.Syserr($"Failed to properly disconnect client #{client.cid}"); }
 
         if (socket != null)
             socket.Close();

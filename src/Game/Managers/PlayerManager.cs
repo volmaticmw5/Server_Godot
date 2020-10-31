@@ -9,7 +9,16 @@ using System.Threading.Tasks;
 
 class PlayerManager
 {
-    public static void HandlePlayerBroadcast(int fromClient, Packet packet)
+	public static void Update()
+	{
+		for (int i = 1; i < Server.the_core.Clients.Count; i++)
+		{
+			if (Server.the_core.Clients[i].player != null)
+				Server.the_core.Clients[i].player.Update();
+		}
+	}
+
+	public static void HandlePlayerBroadcast(int fromClient, Packet packet)
     {
         int cid = packet.ReadInt();
         int sid = packet.ReadInt();
@@ -37,6 +46,7 @@ class PlayerManager
 		PlayerData pdata = await GetPlayerData(fromClient, accountData);
 		AssignPlayerDataToClient(fromClient, pdata);
 		SendInitializePlayerPacket(fromClient, pdata);
+		Logger.PlayerLog(pdata.pid, "LOGIN");
 	}
 
 	private static async Task<int[]> AssignTargetSessionToClientAndGetAccountData(int client, int sid)
@@ -121,7 +131,7 @@ class PlayerManager
 		Int32.TryParse(rows.Rows[0]["level"].ToString(), out int level);
 
 		PlayerStats stats = new PlayerStats();
-		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false);
+		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false, stats.maxHp, stats.maxMana);
 		return nData;
 	}
 

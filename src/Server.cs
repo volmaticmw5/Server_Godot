@@ -8,6 +8,7 @@ class Server
     private static bool isRunning = true;
     private static Thread mainThread;
     private static Thread mapThread;
+    private static Thread playerThread;
     public static Core the_core;
 
     static void Main(string[] args)
@@ -19,6 +20,7 @@ class Server
 
     private static bool SetupServerForInitialization()
     {
+        Logger.CleanLogs();
         if (!Config.TryReadConfigFiles()) return false;
         if (!Config.TryReadMobData()) return false;
         if (!Config.TryReadGroupData()) return false;
@@ -32,7 +34,7 @@ class Server
         DB = new DatabaseManager(Config.DatabaseTick, Config.DatabasePoolSize);
         if (!DB.IsOK())
         {
-            Logger.Syslog("Server initialization failed: database manager was not ok");
+            Logger.Syserr("Server initialization failed: database manager was not ok");
             return false;
         }
         return true;
@@ -43,6 +45,7 @@ class Server
         StartCorrectTypeOfServerCore();
         InitializeMainThread();
         InitializeMapThread();
+        InitializePlayerThread();
     }
 
     private static void StartCorrectTypeOfServerCore()
@@ -73,9 +76,19 @@ class Server
         mapThread.Start();
     }
 
+    private static void InitializePlayerThread()
+    {
+        if (Config.Type != ServerTypes.Game)
+            return;
+
+        List<Action> playerThreadActions = new List<Action>() { () => ThreadManager.UpdatePlayerThread(), () => PlayerManager.Update() };
+        playerThread = new Thread(new ThreadStart(() => ThreadedWork(playerThreadActions, "Player", Config.Tick)));
+        playerThread.Start();
+    }
+
     private static void ThreadedWork(List<Action> actions, string threadName, int msTick)
     {
-        Logger.Syslog($"[SERVER] {threadName} thread has started. Running at {msTick} ms per tick.");
+        Logger.Syslog($"{threadName} thread has started. Running at {msTick} ms per tick.");
         DateTime nextLoop = DateTime.Now;
         while (isRunning)
         {
@@ -85,7 +98,7 @@ class Server
             nextLoop = nextLoop.AddMilliseconds(msTick);
 
             if (nextLoop < DateTime.Now)
-                Logger.Syslog($"[SERVER] {threadName} thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
+                Logger.Syserr($"{threadName} thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
 
             if (nextLoop > DateTime.Now)
             {

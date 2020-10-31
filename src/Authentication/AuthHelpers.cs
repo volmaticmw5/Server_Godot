@@ -224,7 +224,7 @@ public class AuthHelpers
 			}
 			else
 			{
-				Logger.Syslog($"[ALERT] Client #{cid} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
+				Logger.Syserr($"Client #{cid} attempted to enter a character of pid {pid} on a non existing map #{map} !!!");
 				core.Clients[cid].tcp.Disconnect();
 				return;
 			}
