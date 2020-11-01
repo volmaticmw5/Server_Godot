@@ -189,7 +189,6 @@ public class AuthHelpers
 	public static async Task<int> AssignPidToSession(DataTable rows, int cid)
 	{
 		AuthCore core = (AuthCore)Server.the_core;
-		Int32.TryParse(rows.Rows[0]["map"].ToString(), out int map);
 		List<MySqlParameter> sParams = new List<MySqlParameter>()
 		{
 			MySQL_Param.Parameter("?session", core.Clients[cid].session_id),
@@ -200,11 +199,13 @@ public class AuthHelpers
 		return 1;
 	}
 
-	public static void MakeClientConnectToGameServer(DataTable result, int cid)
+	public static void MakeClientConnectToGameServer(DataTable result, int cid, int forcedMap = -1)
 	{
 		AuthCore core = (AuthCore)Server.the_core;
 		Int32.TryParse(result.Rows[0]["map"].ToString(), out int map);
 		Int32.TryParse(result.Rows[0]["id"].ToString(), out int pid);
+		if (forcedMap > 0)
+			map = forcedMap;
 
 		foreach (GameServer server in Config.GameServers)
 		{

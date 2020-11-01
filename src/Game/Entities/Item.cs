@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Threading.Tasks;
 
 public class Item
 {
@@ -124,7 +125,7 @@ public class Item
     public async void Flush()
     {
         List<MySqlParameter> countParams = new List<MySqlParameter>() { MySQL_Param.Parameter("?id", iid) };
-        DataTable rows = await Server.DB.QueryAsync("SELECT COUNT(*) as count FROM [[player]].item WHERE `id`=?id", countParams);
+        DataTable rows = await Server.DB.QueryAsync("SELECT COUNT(*) as count FROM [[player]].item WHERE `id`=?id LIMIT 1", countParams);
         Int32.TryParse(rows.Rows[0]["count"].ToString(), out int rCount);
         if (rCount == 0)
         {

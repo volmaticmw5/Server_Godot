@@ -150,9 +150,10 @@ public class TCP
                 if (playerMap.mobs[m].focus == client.player)
                     playerMap.mobs[m].ClearFocus();
             }
+            Logger.PlayerLog(client.player.pid, "LOGOUT");
+
             client.player.Dispose();
             client.player = null;
-            Logger.PlayerLog(client.player.pid, "LOGOUT");
         }
         client.CleanUp();
 

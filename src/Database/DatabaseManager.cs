@@ -159,6 +159,7 @@ class DatabaseManager
             using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
             {
                 await da.FillAsync(result);
+                da.Dispose();
                 return result;
             }
         }

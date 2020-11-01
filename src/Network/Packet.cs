@@ -20,6 +20,7 @@ public class Packet : IDisposable
 		chatCb,
 		updateInventory,
 		damageSignal,
+		reconnectWarp
 	}
 
 	/// <summary>Sent from client to server.</summary>
@@ -34,7 +35,8 @@ public class Packet : IDisposable
 		chatMsg,
 		itemChangePosition,
 		itemUse,
-		weaponHit
+		weaponHit,
+		getTargetGameServerForWarp
 	}
 
 	private List<byte> buffer;

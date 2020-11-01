@@ -17,6 +17,7 @@ public enum GM_CMD_TYPES
 	ITEM = 'i',
 	ANNOUNCE = 'n',
 	MOB = 'm',
+	WARP = 'w'
 }
 
 public enum PLAYER_CMD_TYPES
@@ -101,6 +102,16 @@ class ChatHandler
 		{
 			case GM_CMD_TYPES.ITEM:
 				processItemCmd(client, msg);
+				break;
+			case GM_CMD_TYPES.WARP:
+				string[] args = msg.Split(' ');
+				if (args[1] == "")
+				{
+					sendMissingArguments(client, "/w <map>");
+					return;
+				}
+				Int32.TryParse(args[1], out int map);
+				Server.the_core.Clients[client].player.Warp(map);
 				break;
 		}
 	}

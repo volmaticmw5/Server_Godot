@@ -44,6 +44,7 @@ class AuthCore : Core
 			{(int)Packet.ClientPackets.pong, Pong.HandlePong },
 			{(int)Packet.ClientPackets.authenticate, Authentication.Authenticate },
 			{(int)Packet.ClientPackets.enterMap, Authentication.EnterMap },
+			{(int)Packet.ClientPackets.getTargetGameServerForWarp, Authentication.SendTargetGameServerForWarp },
 		};
 	}
 

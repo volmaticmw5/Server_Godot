@@ -67,3 +67,4 @@ C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.Assem
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.csproj.CopyComplete
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.dll
 C:\Users\Portatil\Desktop\Game\Server_Godot\obj\Debug\netcoreapp3.1\Server.pdb
+C:\Users\Workstation\Desktop\Server\Server\obj\Debug\netcoreapp3.1\Server.csprojAssemblyReference.cache

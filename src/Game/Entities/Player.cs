@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 
 public class Player
 {
@@ -23,6 +24,7 @@ public class Player
     public PlayerStats stats;
     public Inventory inventory { get; private set; }
     public bool attacking;
+    private bool warping = false;
     private Item itemEquipped;
 
     public Player(Client _client, int _session, int _pid, int _aid, int _level, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats)
@@ -62,7 +64,24 @@ public class Player
 
     public async void Dispose()
     {
-        string statsRaw = JsonConvert.SerializeObject(this.stats);
+        await flush();
+        inventory.Flush();
+
+        if(!warping)
+        {
+            List<MySqlParameter> _params = new List<MySqlParameter>()
+            {
+                MySQL_Param.Parameter("?session", session),
+                MySQL_Param.Parameter("?aid", aid),
+                MySQL_Param.Parameter("?pid", pid),
+            };
+            await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params);
+            Logger.Syslog($"Player with session id {session} dumped and destroyed.");
+        }
+    }
+
+    private async Task<int> flush()
+    {
         List<MySqlParameter> dumpParams = new List<MySqlParameter>()
         {
             MySQL_Param.Parameter("?pid", pid),
@@ -74,17 +93,25 @@ public class Player
             MySQL_Param.Parameter("?map", this.map),
         };
         await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map WHERE `id`=?pid LIMIT 1", dumpParams);
+        return 0;
+    }
 
+    public async void Warp(int map)
+    {
+        warping = true;
         inventory.Flush();
-
-        List<MySqlParameter> _params = new List<MySqlParameter>()
+        await flush();
+        for (int i = 3; i > 0; i--)
         {
-            MySQL_Param.Parameter("?session", session),
-            MySQL_Param.Parameter("?aid", aid),
-            MySQL_Param.Parameter("?pid", pid),
-        };
-        await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params);
-        Logger.Syslog($"Player with session id {session} dumped and destroyed.");
+            ChatHandler.sendLocalChatMessage(client.cid, $"You will be disconnected in {i} second(s)...");
+            await Task.Delay(1000);
+        }
+
+        using (Packet pck = new Packet((int)Packet.ServerPackets.reconnectWarp))
+        {
+            pck.Write(map);
+            Core.SendTCPData(client.cid, pck);
+        }
     }
 
     public void receiveDamage(float damage)

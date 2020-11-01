@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -83,6 +84,7 @@ class Config
     public static long EpochStart;
     public static GameServer[] GameServers;
     public static MapStruct[] Maps;
+    public static Dictionary<int, Vector3> SpawnPositionsForMaps;
 
     // Not in the config structure
     public static MobData[] Mobs;
@@ -122,6 +124,8 @@ class Config
                     QuestsPath = json.QuestsPath;
                     MaxStackItems = json.MaxStackItems;
                     EpochStart = json.EpochStart;
+                    SpawnPositionsForMaps = new Dictionary<int, Vector3>();
+
                     try
                     {
                         GameServers = json.GameServers;
@@ -133,6 +137,14 @@ class Config
                         Maps = json.Maps;
                     }
                     catch { }
+
+                    foreach (MapStruct map in Maps)
+                    {
+                        var txt = File.ReadAllText(LocalePath + "map/" + map.id + "/spawn");
+                        string[] floats = txt.Split(',');
+                        Vector3 pos = new Vector3(float.Parse(floats[0]), float.Parse(floats[1]), float.Parse(floats[2]));
+                        SpawnPositionsForMaps.Add(map.id, pos);
+                    }
 
                     return true;
                 }catch(Exception e)
