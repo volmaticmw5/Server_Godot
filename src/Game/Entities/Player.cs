@@ -65,7 +65,7 @@ public class Player
     public async void Dispose()
     {
         await flush();
-        inventory.Flush();
+        await inventory.Flush();
 
         if(!warping)
         {
@@ -99,8 +99,8 @@ public class Player
     public async void Warp(int map)
     {
         warping = true;
-        inventory.Flush();
         await flush();
+        await inventory.Flush();
         for (int i = 3; i > 0; i--)
         {
             ChatHandler.sendLocalChatMessage(client.cid, $"You will be disconnected in {i} second(s)...");

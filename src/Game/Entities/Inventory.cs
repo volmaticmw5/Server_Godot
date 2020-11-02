@@ -26,10 +26,11 @@ public class Inventory
         return nInv;
     }
 
-    public void Flush()
+    public async Task<int> Flush()
     {
         for (int i = 0; i < items.Count; i++)
-            items[i].Flush();
+            _ = await items[i].Flush();
+        return 0;
     }
 
     public void UpdateMatrix()

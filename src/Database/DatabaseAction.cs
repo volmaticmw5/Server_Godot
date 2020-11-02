@@ -25,7 +25,7 @@ class DatabaseAction
         DataTable result = new DataTable();
         try
         {
-            MySqlCommand cmd = new MySqlCommand(Query, Server.DB.GetSuitableConnection());
+            MySqlCommand cmd = new MySqlCommand(Query, await Server.DB.GetSuitableConnection());
 
             foreach (MySqlParameter param in parameters)
                 cmd.Parameters.Add(param);

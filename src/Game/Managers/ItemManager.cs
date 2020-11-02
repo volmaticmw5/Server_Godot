@@ -4,12 +4,12 @@ using System.Text;
 
 public class ItemManager
 {
-    public static void FlushItems()
+    public static async void FlushItems()
     {
         for (int i = 0; i < Server.the_core.Clients.Count; i++)
         {
             if(Server.the_core.Clients[i].player != null)
-                Server.the_core.Clients[i].player.inventory.Flush();
+                _ = await Server.the_core.Clients[i].player.inventory.Flush();
         }
     }
 

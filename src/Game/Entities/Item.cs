@@ -44,7 +44,7 @@ public class Item
             this.iid = _iid;
     }
 
-    private void createItemInDb()
+    private async void createItemInDb()
     {
         List<MySqlParameter> _params = new List<MySqlParameter>() { 
             MySQL_Param.Parameter("?vnum", this.data.vnum), 
@@ -53,7 +53,7 @@ public class Item
             MySQL_Param.Parameter("?count", this.count),
             MySQL_Param.Parameter("?pos", this.position)
         };
-        this.iid = Server.DB.QuerySyncReturnAI("INSERT INTO [[player]].item (`vnum`,`owner`,`window`,`count`,`pos`) VALUES (?vnum,?owner,?window,?count,?pos)", _params);
+        this.iid = await Server.DB.QuerySyncReturnAIAsync("INSERT INTO [[player]].item (`vnum`,`owner`,`window`,`count`,`pos`) VALUES (?vnum,?owner,?window,?count,?pos)", _params);
     }
 
     private bool isUsable()
@@ -122,7 +122,7 @@ public class Item
         Logger.ItemLog(this.data.vnum, this.iid, "DEQUIP");
     }
 
-    public async void Flush()
+    public async Task<int> Flush()
     {
         List<MySqlParameter> countParams = new List<MySqlParameter>() { MySQL_Param.Parameter("?id", iid) };
         DataTable rows = await Server.DB.QueryAsync("SELECT COUNT(*) as count FROM [[player]].item WHERE `id`=?id LIMIT 1", countParams);
@@ -143,6 +143,8 @@ public class Item
                 MySQL_Param.Parameter("?pos", position),
             };
             await Server.DB.QueryAsync("UPDATE [[player]].item SET `owner`=?owner, `window`=?window, `count`=?count, `pos`=?pos WHERE `id`=?id AND `vnum`=?vnum LIMIT 1", dumpParams);
+            return 0;
         }
+        return 1;
     }
 }

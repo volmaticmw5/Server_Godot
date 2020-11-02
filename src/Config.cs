@@ -149,6 +149,7 @@ class Config
                     return true;
                 }catch(Exception e)
                 {
+                    Logger.Syserr(e.Message);
                     return false;
                 }
             }

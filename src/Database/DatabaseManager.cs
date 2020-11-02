@@ -78,6 +78,8 @@ class DatabaseManager
                 _ = Reconnect(instanceId);
                 Thread.Sleep(reconnectWait * 1000);
             }
+
+            Logger.Syserr(ex.Message);
         }
     }
 
@@ -86,11 +88,14 @@ class DatabaseManager
         return this.isOk;
     }
 
-    public MySqlConnection GetSuitableConnection()
+    public async Task<MySqlConnection> GetSuitableConnection()
     {
         lastIdUsed++;
         if (lastIdUsed >= ConnectionPool.Length)
             lastIdUsed = 0;
+
+        if (ConnectionPool[lastIdUsed].State == ConnectionState.Closed || ConnectionPool[lastIdUsed].State == ConnectionState.Broken)
+            await ConnectionPool[lastIdUsed].OpenAsync();
 
         return ConnectionPool[lastIdUsed];
     }
@@ -151,7 +156,7 @@ class DatabaseManager
         DataTable result = new DataTable();
         try
         {
-            MySqlCommand cmd = new MySqlCommand(query, Server.DB.GetSuitableConnection());
+            MySqlCommand cmd = new MySqlCommand(query, await Server.DB.GetSuitableConnection());
 
             foreach (MySqlParameter param in parameters)
                 cmd.Parameters.Add(param);
@@ -159,7 +164,6 @@ class DatabaseManager
             using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
             {
                 await da.FillAsync(result);
-                da.Dispose();
                 return result;
             }
         }
@@ -192,7 +196,7 @@ class DatabaseManager
         QueryUndefQueue.Add(nAction);
     }
 
-    public DataTable QuerySync(string query, List<MySqlParameter> parameters)
+    public async Task<DataTable> QuerySync(string query, List<MySqlParameter> parameters)
     {
         // Sanitize 
         query = query.Replace("[[account]]", Config.DatabaseAccountDb);
@@ -202,15 +206,16 @@ class DatabaseManager
         DataTable result = new DataTable();
         try
         {
-            MySqlCommand cmd = new MySqlCommand(query, Server.DB.GetSuitableConnection());
+            MySqlCommand cmd = new MySqlCommand(query, await Server.DB.GetSuitableConnection());
 
             foreach (MySqlParameter param in parameters)
                 cmd.Parameters.Add(param);
 
             using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
-                da.Fill(result);
-
-            return result;
+            {
+                await da.FillAsync(result);
+                return result;
+            }
         }
         catch (MySqlException ex)
         {
@@ -219,7 +224,7 @@ class DatabaseManager
         return null;
     }
 
-    public long QuerySyncReturnAI(string query, List<MySqlParameter> parameters)
+    public async Task<long> QuerySyncReturnAIAsync(string query, List<MySqlParameter> parameters)
     {
         // Sanitize 
         query = query.Replace("[[account]]", Config.DatabaseAccountDb);
@@ -229,7 +234,7 @@ class DatabaseManager
         DataTable result = new DataTable();
         try
         {
-            MySqlCommand cmd = new MySqlCommand(query, Server.DB.GetSuitableConnection());
+            MySqlCommand cmd = new MySqlCommand(query, await Server.DB.GetSuitableConnection());
 
             foreach (MySqlParameter param in parameters)
                 cmd.Parameters.Add(param);
