@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 
 class Core
 {
@@ -22,6 +23,20 @@ class Core
 		socket = new TcpListener(IPAddress.Any, Config.Port);
 		socket.Start();
 		socket.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+	}
+
+	public void Flush()
+	{
+		for (int i = 1; i < Clients.Count; i++)
+		{
+			if (Clients[i] == null)
+				continue;
+			if (Clients[i].player != null)
+				Clients[i].player.Dispose();
+			if (Clients[i].tcp.socket != null)
+				if(Clients[i].tcp.socket.Connected)
+					Clients[i].tcp.Disconnect();
+		}
 	}
 
 	public int getClientFromPid(int pid)

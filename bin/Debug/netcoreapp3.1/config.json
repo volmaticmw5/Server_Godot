@@ -5,8 +5,6 @@
   "Port": 55001,
   "MaxPlayers": 2500,
   "MaxCharactersInAccount": 8,
-  "Tick": 200,
-  "MapTick": 80,
   "DatabaseHost": "127.0.0.1",
   "DatabasePort": 3306,
   "DatabaseUser": "root",

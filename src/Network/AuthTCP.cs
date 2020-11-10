@@ -94,7 +94,7 @@ class AuthTCP : TCP
 
             if (AuthCore.main_thread_packets.ContainsKey(packetId))
             {
-                ThreadManager.ExecuteOnMainThread(() =>
+                Server.main_thread_manager.addToQeue(() =>
                 {
                     AuthCore.main_thread_packets[packetId](cid, authPacket);
                 });

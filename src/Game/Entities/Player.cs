@@ -141,7 +141,7 @@ public class Player
 
     public bool isAlive()
     {
-        return this.data.hp > 0f;
+        return this.data.hp > 0;
     }
 
     public void UpdatePosition(Vector3 newPos, int newHeading, bool attacking)

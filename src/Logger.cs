@@ -59,7 +59,7 @@ class Logger
             MySQL_Param.Parameter("?iid", iid),
             MySQL_Param.Parameter("?action", action),
         };
-        Server.DB.AddQueryToQeueUndefined("INSERT INTO [[log]].item_log (vnum,iid,action,date) VALUES (?vnum,?iid,?action,NOW())", _params);
+        Server.DB.QueryAsync("INSERT INTO [[log]].item_log (vnum,iid,action,date) VALUES (?vnum,?iid,?action,NOW())", _params);
     }
 
     public static void PlayerLog(int pid, string what)
@@ -72,6 +72,6 @@ class Logger
             MySQL_Param.Parameter("?pid", pid),
             MySQL_Param.Parameter("?what", what),
         };
-        Server.DB.AddQueryToQeueUndefined("INSERT INTO [[log]].player_log (pid,what,date) VALUES (?pid,?what,NOW())", _params);
+        Server.DB.QueryAsync("INSERT INTO [[log]].player_log (pid,what,date) VALUES (?pid,?what,NOW())", _params);
     }
 }

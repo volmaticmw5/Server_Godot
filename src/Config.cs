@@ -36,8 +36,6 @@ class ConfigStructure
     public int Port;
     public int MaxPlayers;
     public int MaxCharactersInAccount;
-    public int Tick;
-    public int MapTick;
     public string DatabaseHost;
     public int DatabasePort;
     public string DatabaseUser;
@@ -65,8 +63,6 @@ class Config
     public static int Port;
     public static int MaxPlayers = 9999;
     public static int MaxCharactersInAccount;
-    public static int Tick;
-    public static int MapTick;
     public static string DatabaseHost;
     public static int DatabasePort;
     public static string DatabaseUser;
@@ -107,8 +103,6 @@ class Config
                     Port = json.Port;
                     MaxPlayers = json.MaxPlayers;
                     MaxCharactersInAccount = json.MaxCharactersInAccount;
-                    Tick = json.Tick;
-                    try { MapTick = json.MapTick; } catch { }
                     DatabaseHost = json.DatabaseHost;
                     DatabasePort = json.DatabasePort;
                     DatabaseUser = json.DatabaseUser;

@@ -8,11 +8,6 @@ using System.Threading.Tasks;
 
 class DatabaseManager
 {
-    private Thread dbThread;
-    private bool abort = false;
-    private List<DatabaseAction> QueryQueue;
-    private List<DatabaseActionUndefined> QueryUndefQueue;
-
     private MySqlConnection[] ConnectionPool;
     private int lastIdUsed = 0;
     private int reconnectAttemptCount = 1;
@@ -24,8 +19,6 @@ class DatabaseManager
     public DatabaseManager(int tick, int poolSize)
     {
         reconnectAttemptCount = 1;
-        QueryQueue = new List<DatabaseAction>();
-        QueryUndefQueue = new List<DatabaseActionUndefined>();
         ConnectionPool = new MySqlConnection[poolSize];
         for (int i = 0; i < poolSize; i++)
             ConnectionPool[i] = new MySqlConnection(@"server=" + Config.DatabaseHost + ";userid=" + Config.DatabaseUser + ";password=" + Config.DatabasePassword + ";database=" + Config.DatabaseDefault + "");
@@ -33,9 +26,6 @@ class DatabaseManager
 
         if (!IsOK())
             return;
-
-        this.dbThread = new Thread(new ThreadStart(() => ThreadWork(tick)));
-        this.dbThread.Start();
     }
 
     private async Task ConnectPool()
@@ -112,40 +102,6 @@ class DatabaseManager
             CloseConnectionPool(i);
     }
 
-    private void ThreadWork(int tick)
-    {
-        Logger.Syslog("Database thread started.");
-        DateTime nextLoop = DateTime.Now;
-        while (!abort)
-        {
-            DatabaseAction[] temp = QueryQueue.ToArray();
-            DatabaseActionUndefined[] tempUndef = QueryUndefQueue.ToArray();
-            QueryQueue.Clear();
-            QueryUndefQueue.Clear();
-
-            for (int i = 0; i < temp.Length; i++)
-                temp[i].ExecuteQuery(temp[i].clientId);
-
-            for (int i = 0; i < tempUndef.Length; i++)
-                tempUndef[i].ExecuteQuery();
-
-            nextLoop = nextLoop.AddMilliseconds(tick);
-            if (nextLoop < DateTime.Now)
-                Logger.Syserr($"Database thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
-
-            if (nextLoop > DateTime.Now)
-            {
-                TimeSpan time = (nextLoop - DateTime.Now);
-                if (time < TimeSpan.Zero)
-                    time = TimeSpan.Zero;
-                if (time > TimeSpan.MaxValue)
-                    time = TimeSpan.Zero;
-
-                Thread.Sleep(time);
-            }
-        }
-    }
-
     public async Task<DataTable> QueryAsync(string query, List<MySqlParameter> parameters)
     {
         // Sanitize 
@@ -172,28 +128,6 @@ class DatabaseManager
             Logger.Syserr($"{ex.Message}");
             return null;
         }
-    }
-
-    public void AddQueryToQeue(string query, List<MySqlParameter> parameters, int client, Action<int, DataTable> returnMethod = null)
-    {
-        // Sanitize 
-        query = query.Replace("[[account]]", Config.DatabaseAccountDb);
-        query = query.Replace("[[player]]", Config.DatabasePlayerDb);
-        query = query.Replace("[[log]]", Config.DatabaseLogDb);
-        // Add to queue
-        DatabaseAction nAction = new DatabaseAction(query, client, parameters, returnMethod);
-        QueryQueue.Add(nAction);
-    }
-
-    public void AddQueryToQeueUndefined(string query, List<MySqlParameter> parameters)
-    {
-        // Sanitize 
-        query = query.Replace("[[account]]", Config.DatabaseAccountDb);
-        query = query.Replace("[[player]]", Config.DatabasePlayerDb);
-        query = query.Replace("[[log]]", Config.DatabaseLogDb);
-        // Add to queue
-        DatabaseActionUndefined nAction = new DatabaseActionUndefined(query, parameters);
-        QueryUndefQueue.Add(nAction);
     }
 
     public async Task<DataTable> QuerySync(string query, List<MySqlParameter> parameters)

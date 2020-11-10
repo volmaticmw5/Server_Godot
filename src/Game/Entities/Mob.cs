@@ -17,6 +17,7 @@ public class Mob
     public float currentHp;
     public Vector3 position;
     public float respawnTime;
+    private int lastWanderTime;
     private int msLeftForWalkUpdate = 0;
     private int wanderKey = 0;
     private Vector3 startingWalkPoint = Vector3.Zero;
@@ -76,7 +77,6 @@ public class Mob
                 if (mobs[i].focus != null)
                 {
                     focus = mobs[i].focus;
-                    return true;
                 }
             }
         }
@@ -162,8 +162,9 @@ public class Mob
         }
         else
         {
-            msLeftForWalkUpdate -= Config.MapTick;
+            msLeftForWalkUpdate -= ((int)MathHelp.TimestampMiliseconds() - lastWanderTime);
         }
+        lastWanderTime = (int)MathHelp.TimestampMiliseconds();
     }
 
     private void doWanderCycle()

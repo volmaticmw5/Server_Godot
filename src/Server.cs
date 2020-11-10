@@ -5,16 +5,16 @@ using System.Threading;
 class Server
 {
     public static DatabaseManager DB;
-    private static bool isRunning = true;
-    private static Thread mainThread;
-    private static Thread mapThread;
-    private static Thread playerThread;
     public static Core the_core;
+    public static TheadHelper main_thread_manager;
+    public static TheadHelper map_thread_manager;
+    public static TheadHelper player_thread_manager;
 
     static void Main(string[] args)
     {
         bool canBoot = SetupServerForInitialization();
         if(!canBoot) Environment.Exit(1);
+        AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
         BootServer();
     }
 
@@ -27,6 +27,33 @@ class Server
         if (!Config.TryReadItemData()) return false;
         if (!TryConnectToDatabase()) return false;
         return true;
+    }
+
+    static void OnProcessExit(object sender, EventArgs e)
+    {
+        Logger.Syslog("Exit signal received, started shutdown sequence.");
+        if(Config.Type == ServerTypes.Game)
+        {
+            Logger.Syslog("Flushing core...");
+            the_core.Flush();
+            Logger.Syslog("Waiting for sql completion...");
+            Thread.Sleep(2500);
+            Logger.Syslog("Core flushed.");
+        }
+
+        DB.CloseAllConnections();
+        Logger.Syslog("Closed database connections");
+        main_thread_manager.abort = true;
+        Thread.Sleep(200);
+        Logger.Syslog("Main thread aborted.");
+        map_thread_manager.abort = true;
+        Thread.Sleep(200);
+        Logger.Syslog("Map thread aborted.");
+        player_thread_manager.abort = true;
+        Thread.Sleep(200);
+        Logger.Syslog("Player thread aborted.");
+
+        Logger.Syslog("Shutting down sequence completed. Bye!");
     }
 
     private static bool TryConnectToDatabase()
@@ -60,9 +87,8 @@ class Server
 
     private static void InitializeMainThread()
     {
-        List<Action> mainThreadActions = new List<Action>() { () => ThreadManager.UpdateMain() };
-        mainThread = new Thread(new ThreadStart(() => ThreadedWork(mainThreadActions, "Main", Config.Tick)));
-        mainThread.Start();
+        main_thread_manager = new TheadHelper();
+        main_thread_manager.the_thread.Start();
     }
 
     private static void InitializeMapThread()
@@ -71,9 +97,8 @@ class Server
             return;
 
         MapManager.AddConfigMapsToMapManager();
-        List<Action> mapThreadActions = new List<Action>() { () => ThreadManager.UpdateMapThread(), () => MapManager.Update() };
-        mapThread = new Thread(new ThreadStart(() => ThreadedWork(mapThreadActions, "Map", Config.MapTick)));
-        mapThread.Start();
+        map_thread_manager = new TheadHelper(new List<Action>(){() => MapManager.Update() });
+        map_thread_manager.the_thread.Start();
     }
 
     private static void InitializePlayerThread()
@@ -81,35 +106,7 @@ class Server
         if (Config.Type != ServerTypes.Game)
             return;
 
-        List<Action> playerThreadActions = new List<Action>() { () => ThreadManager.UpdatePlayerThread(), () => PlayerManager.Update() };
-        playerThread = new Thread(new ThreadStart(() => ThreadedWork(playerThreadActions, "Player", Config.Tick)));
-        playerThread.Start();
-    }
-
-    private static void ThreadedWork(List<Action> actions, string threadName, int msTick)
-    {
-        Logger.Syslog($"{threadName} thread has started. Running at {msTick} ms per tick.");
-        DateTime nextLoop = DateTime.Now;
-        while (isRunning)
-        {
-            foreach (Action action in actions)
-                action();
-
-            nextLoop = nextLoop.AddMilliseconds(msTick);
-
-            if (nextLoop < DateTime.Now)
-                Logger.Syserr($"{threadName} thread hiched for {(DateTime.Now - nextLoop).Milliseconds}ms!");
-
-            if (nextLoop > DateTime.Now)
-            {
-                TimeSpan time = (nextLoop - DateTime.Now);
-                if (time < TimeSpan.Zero)
-                    time = TimeSpan.Zero;
-                if (time > TimeSpan.MaxValue)
-                    time = TimeSpan.Zero;
-
-                Thread.Sleep(time);
-            }
-        }
+        player_thread_manager = new TheadHelper(new List<Action>() { () => PlayerManager.Update() });
+        player_thread_manager.the_thread.Start();
     }
 }

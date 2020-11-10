@@ -104,17 +104,11 @@ public class TCP
 
             if (Core.main_thread_packets.ContainsKey(packetId))
             {
-                ThreadManager.ExecuteOnMainThread(() =>
-                {
-                    Core.main_thread_packets[packetId](cid, packet);
-                });
+                Server.main_thread_manager.addToQeue(() => { Core.main_thread_packets[packetId](cid, packet); });
             }
             else if (Core.map_thread_packets.ContainsKey(packetId))
             {
-                ThreadManager.ExecuteOnMapThread(() =>
-                {
-                    Core.map_thread_packets[packetId](cid, packet);
-                });
+                Server.map_thread_manager.addToQeue(() => { Core.map_thread_packets[packetId](cid, packet); });
             }
             else
             {
