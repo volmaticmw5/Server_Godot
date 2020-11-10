@@ -239,7 +239,7 @@ public class Packet : IDisposable
 		Write(data.stats.movementSpeed);
 		Write(data.stats.pAttack);
 		Write(data.stats.mAttack);
-		Write(data.attacking);
+		Write((int)data.animation_state);
 		Write(data.maxHp);
 		Write(data.maxMana);
 		Write(data.hp);
@@ -507,14 +507,14 @@ public class Packet : IDisposable
 			int heading = ReadInt();
 			float attSpeed = ReadFloat();
 			float movSpeed = ReadFloat();
-			bool attacking = ReadBool();
+			ANIMATION_STATES animation_state = (ANIMATION_STATES)ReadInt();
 			float hp = ReadFloat();
 			float mana = ReadFloat();
 			float maxHp = ReadFloat();
 			float maxMana = ReadFloat();
 
 			PlayerStats stats = new PlayerStats();
-			return new PlayerData(pid, name, level, map, sex, race, new Vector3(x, y, z), heading, stats, attacking, 0,0,maxHp,hp,mana,maxMana);
+			return new PlayerData(pid, name, level, map, sex, race, new Vector3(x, y, z), heading, stats, animation_state, 0,0,maxHp,hp,mana,maxMana);
 		}
 		catch
 		{

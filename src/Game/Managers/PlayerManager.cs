@@ -23,10 +23,9 @@ class PlayerManager
         int cid = packet.ReadInt();
         int sid = packet.ReadInt();
 		PlayerData pdata = packet.ReadPlayerData();
-		bool attacking = packet.ReadBool();
 
         if (Security.Validate(cid, fromClient, sid))
-            Server.the_core.Clients[fromClient].player.UpdatePosition(pdata.pos, pdata.heading, attacking);
+            Server.the_core.Clients[fromClient].player.UpdatePosition(pdata.pos, pdata.heading, pdata.animation_state);
     }
 
     public static async void NewConnectingPlayer(int fromClient, Packet packet)
@@ -98,7 +97,7 @@ class PlayerManager
 			Int32.TryParse(pResult.Rows[0]["h"].ToString(), out int heading);
 
 			PlayerStats stats = new PlayerStats();
-			PlayerData pdata = new PlayerData(pid, "", level, 0, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats, false, aid, sid, 10f, 10f, 10f, 10f, exp, vit, str, inte, dex);
+			PlayerData pdata = new PlayerData(pid, "", level, 0, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats, ANIMATION_STATES.WALK, aid, sid, 10f, 10f, 10f, 10f, exp, vit, str, inte, dex);
 			Player player = new Player(Server.the_core.Clients[client], pdata, stats);
 			Inventory inventory = await Inventory.BuildInventory(player);
 			player.AssignInventory(inventory);
@@ -142,7 +141,7 @@ class PlayerManager
 		Int32.TryParse(rows.Rows[0]["dex"].ToString(), out int dex);
 
 		PlayerStats stats = new PlayerStats();
-		PlayerData nData = new PlayerData(pid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false, aid, sid, 100f, 100f, exp,vit,str,_int,dex);
+		PlayerData nData = new PlayerData(pid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, ANIMATION_STATES.WALK, aid, sid, 100f, 100f, exp,vit,str,_int,dex);
 		return nData;
 	}
 
@@ -150,7 +149,7 @@ class PlayerManager
 	{
 		Server.the_core.Clients[client].player.name = data.name;
 		Server.the_core.Clients[client].player.data.map = data.map;
-		Server.the_core.Clients[client].player.UpdatePosition(data.pos, data.heading, false);
+		Server.the_core.Clients[client].player.UpdatePosition(data.pos, data.heading, data.animation_state);
 	}
 
 	private static void SendInitializePlayerPacket(int client, PlayerData data)

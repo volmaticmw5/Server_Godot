@@ -222,7 +222,7 @@ public class Map
                     otherPlayer.data.pos,
                     otherPlayer.data.heading,
                     otherPlayer.data.stats,
-                    otherPlayer.data.attacking,
+                    otherPlayer.data.animation_state,
                     otherPlayer.data.aid,
                     otherPlayer.data.sid,
                     otherPlayer.data.hp,

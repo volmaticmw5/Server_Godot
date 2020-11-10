@@ -144,11 +144,11 @@ public class Player
         return this.data.hp > 0;
     }
 
-    public void UpdatePosition(Vector3 newPos, int newHeading, bool attacking)
+    public void UpdatePosition(Vector3 newPos, int newHeading, ANIMATION_STATES _animation_state)
     {
         this.data.pos = newPos;
         this.data.heading = newHeading;
-        this.data.attacking = attacking;
+        this.data.animation_state = _animation_state;
     }
 
     public void UpdateClientInventory()
