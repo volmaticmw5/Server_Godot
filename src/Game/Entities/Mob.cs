@@ -87,7 +87,7 @@ public class Mob
             return false;
         if (Server.the_core.Clients[focus.client.cid].player == null)
             return false;
-        if (Vector3.Distance(position, focus.pos) > 30f)
+        if (Vector3.Distance(position, focus.data.pos) > 30f)
             return false;
 
         foreach (KeyValuePair<Player,float> player in hittenBy)
@@ -220,7 +220,7 @@ public class Mob
 
     private void chaseOrAttack()
     {
-        if (Vector3.Distance(position, focus.pos) <= (0.001f + data.stats.attRange))
+        if (Vector3.Distance(position, focus.data.pos) <= (0.001f + data.stats.attRange))
         {
             chaseDelta = 0f;
 
@@ -237,9 +237,9 @@ public class Mob
         }
         else
         {
-            chaseDelta += MOB_WALK_SPEED_MODIFIER * (data.stats.movSpeed * Math.Abs(Vector3.Distance(position, focus.pos)));
+            chaseDelta += MOB_WALK_SPEED_MODIFIER * (data.stats.movSpeed * Math.Abs(Vector3.Distance(position, focus.data.pos)));
             chaseDelta = Math.Clamp(chaseDelta, 0f, 1f);
-            position = MathHelp.Lerp(position, focus.pos, chaseDelta);
+            position = MathHelp.Lerp(position, focus.data.pos, chaseDelta);
             toWaitbeforeAttack = (int)data.stats.attSpeed * MOB_ATTACK_SPEED_MODIFIER;
         }
     }

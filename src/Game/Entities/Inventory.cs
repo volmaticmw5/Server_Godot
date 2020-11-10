@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ public class Inventory
 {
     public Player owner { get; private set; }
     public List<Item> items = new List<Item>();
-    private int[,] inventory_slots = new int[5, 8];
+    private static readonly int inventory_size = 5*7;
 
     public Inventory(Player _owner, Item[] _items)
     {
@@ -20,9 +21,8 @@ public class Inventory
 
     public static async Task<Inventory> BuildInventory(Player owner)
     {
-        Item[] items = await getPlayerInventoryFromDatabase(owner.pid);
+        Item[] items = await getPlayerInventoryFromDatabase(owner.data.pid);
         Inventory nInv = new Inventory(owner, items);
-        nInv.UpdateMatrix();
         return nInv;
     }
 
@@ -31,39 +31,6 @@ public class Inventory
         for (int i = 0; i < items.Count; i++)
             _ = await items[i].Flush();
         return 0;
-    }
-
-    public void UpdateMatrix()
-    {
-        int[,] newInventoryMatrix = new int[inventory_slots.GetLength(0), inventory_slots.GetLength(1)];
-        int pos = 1;
-        for (int y = 0; y < newInventoryMatrix.GetLength(1); y++)
-        {
-            for (int x = 0; x < newInventoryMatrix.GetLength(0); x++)
-            {
-                for (int i = 0; i < items.Count; i++)
-                {
-                    if (items[i].window != Item.WINDOW.INVENTORY)
-                        continue;
-
-                    if(items[i].position == pos)
-                    {
-                        if (items[i].data.size == 1)
-                            newInventoryMatrix[x, y] = 1;
-                        else
-                        {
-                            newInventoryMatrix[x, y] = 1;
-                            newInventoryMatrix[x, y + 1] = 1;
-                        }
-
-                        continue;
-                    }
-                }
-                pos++;
-            }
-        }
-
-        inventory_slots = newInventoryMatrix;
     }
 
     public bool hasEquipped(ITEM_TYPES type)
@@ -86,110 +53,28 @@ public class Inventory
         return null;
     }
 
-    public bool canFit(int vnum)
-    {
-        int size = Config.Items[vnum].size;
-        for (int y = 0; y < inventory_slots.GetLength(1); y++)
-        {
-            for (int x = 0; x < inventory_slots.GetLength(0); x++)
-            {
-                if (inventory_slots[x, y] == 0)
-                {
-                    if (size == 1)
-                        return true;
-
-                    if (size == 2)
-                    {
-                        if (inventory_slots[x, y + 1] == 0)
-                            return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public bool canFitAtSlot(long iid, int vnum, int newPos)
-    {
-        int pos = 1;
-        int size = Config.Items[vnum].size;
-        for (int y = 0; y < inventory_slots.GetLength(1); y++)
-        {
-            for (int x = 0; x < inventory_slots.GetLength(0); x++)
-            {
-                if (pos == newPos)
-                {
-                    if(inventory_slots[x,y] == 0)
-                    {
-                        if (size == 1)
-                            return true;
-
-                        if (size == 2)
-                        {
-                            if (inventory_slots[x, y + 1] == 0)
-                                return true;
-                        }
-                    }
-                }
-
-                pos++;
-            }
-        }
-        return false;
-    }
-
     public int getAppropriateWindowPositionForItem(Item.WINDOW window, int vnum)
     {
-        int pos = 1;
-
-        if(window == Item.WINDOW.EQUIPABLES)
-            return 999;
-
-        for (int y = 0; y < inventory_slots.GetLength(1); y++)
+        if(window == Item.WINDOW.INVENTORY)
         {
-            for (int x = 0; x < inventory_slots.GetLength(0); x++)
+            for (int i = 0; i < inventory_size; i++)
             {
-                if (inventory_slots[x, y] == 0)
-                {
-                    if (Config.Items[vnum].size == 1)
-                        return pos;
-                    else
-                        if (inventory_slots[x, y + 1] == 0) 
-                            return pos;
-                }
-                pos++;
+                if (!slotOccupied(i, window))
+                    return i+1;
             }
         }
 
-        return pos;
+        return 1;
     }
 
-    private bool slotOccupied(int slot, int size, Item.WINDOW window)
+    private bool slotOccupied(int slot, Item.WINDOW window)
     {
-        int pos = 1;
-        if(window == Item.WINDOW.INVENTORY)
+        for (int i = 0; i < items.Count; i++)
         {
-            for (int y = 0; y < inventory_slots.GetLength(1); y++)
-            {
-                for (int x = 0; x < inventory_slots.GetLength(0); x++)
-                {
-                    if(pos == slot)
-                    {
-                        if (inventory_slots[x, y] == 1)
-                            return true;
-
-                        if(size == 2)
-                        {
-                            if (inventory_slots.GetLength(1) < y + 1)
-                                continue;
-                            if (inventory_slots[x, y + 1] == 1)
-                                return true;
-                        }
-                    }
-
-                    pos++;
-                }
-            }
+            if (items[i].window != window)
+                continue;
+            if (items[i].position == slot)
+                return true;
         }
         return false;
     }
@@ -200,32 +85,9 @@ public class Inventory
         if (!Config.Items[vnum].stacks && count > 1)
             count = 1;
 
-        Item nItem = new Item(owner.pid, window, newPos, Config.Items[vnum], -1, count);
+        Item nItem = new Item(owner.data.pid, window, newPos, Config.Items[vnum], -1, count);
         items.Add(nItem);
-        UpdateMatrix();
         ChatHandler.sendLocalChatMessage(owner.client.cid, $"You have received x{count} {Config.Items[vnum].name}");
-    }
-
-    private static async Task<Item[]> getPlayerInventoryFromDatabase(int pid)
-    {
-        List<Item> list = new List<Item>();
-        List<MySqlParameter> _params = new List<MySqlParameter>()
-        {
-            MySQL_Param.Parameter("?pid", pid),
-            
-        };
-        DataTable rows = await Server.DB.QueryAsync("SELECT * FROM [[player]].item WHERE `owner`=?pid AND (`window`='INVENTORY' OR `window`='EQUIPABLES')", _params);
-        for (int i = 0; i < rows.Rows.Count; i++)
-        {
-            long.TryParse(rows.Rows[i]["id"].ToString(), out long iid);
-            Int32.TryParse(rows.Rows[i]["vnum"].ToString(), out int vnum);
-            Item.WINDOW window = (Item.WINDOW)Enum.Parse(typeof(Item.WINDOW), rows.Rows[i]["window"].ToString());
-            Int32.TryParse(rows.Rows[i]["count"].ToString(), out int count);
-            Int32.TryParse(rows.Rows[i]["pos"].ToString(), out int pos);
-            Item nItem = new Item(pid, window, pos, Config.Items[vnum], iid, count);
-            list.Add(nItem);
-        }
-        return list.ToArray();
     }
 
     public void AddCountToItem(Item item, int count, Item.WINDOW window)
@@ -242,7 +104,7 @@ public class Inventory
         ChatHandler.sendLocalChatMessage(owner.client.cid, $"You have received x{count} {item.data.name}");
     }
 
-    public void SwapItemPosition(long iid, int newPos, Item.WINDOW window)
+    public void ChangeItemPosition(long iid, int newPos, Item.WINDOW window)
     {
         for (int i = 0; i < items.Count; i++)
         {
@@ -250,38 +112,26 @@ public class Inventory
             {
                 if(window != items[i].window)
                 {
-                    if (slotOccupied(newPos, items[i].data.size, window))
+                    if (slotOccupied(newPos, window))
                         return;
 
                     Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                     items[i].window = window;
                     items[i].position = newPos;
-                    UpdateMatrix();
                     owner.UpdateClientInventory();
                 }
                 else
                 {
-                    if (slotOccupied(newPos, items[i].data.size, window))
+                    if (slotOccupied(newPos, window))
                     {
                         Item toMoveItem = items[i];
                         Item itemInTargetSlot = null;
                         for (int x = 0; x < items.Count; x++)
                         {
-                            if (items[x].data.size == 2)
+                            if (items[x].position == newPos)
                             {
-                                if (items[x].position == newPos || items[x].position == (newPos - inventory_slots.GetLength(0)) || items[x].position == (newPos + inventory_slots.GetLength(0)))
-                                {
-                                    itemInTargetSlot = items[x];
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                if (items[x].position == newPos)
-                                {
-                                    itemInTargetSlot = items[x];
-                                    break;
-                                }
+                                itemInTargetSlot = items[x];
+                                break;
                             }
                         }
 
@@ -290,36 +140,28 @@ public class Inventory
 
                         if (toMoveItem.iid == itemInTargetSlot.iid)
                         {
+                            Logger.Syslog("do nothing?...");
+                            /*
                             Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                             if (items[i].position != newPos)
                                 items[i].position = newPos;
-                            UpdateMatrix();
                             owner.UpdateClientInventory();
                             owner.UpdateStats();
+                            */
                         }
                         else
                         {
-                            if (toMoveItem.data.size == itemInTargetSlot.data.size)
-                            {
-                                Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
-                                itemInTargetSlot.position = items[i].position;
-                                items[i].position = newPos;
-                                UpdateMatrix();
-                                owner.UpdateClientInventory();
-                                owner.UpdateStats();
-                            }
-                            else
-                            {
-                                ChatHandler.sendLocalChatMessage(owner.client.cid, "You can't use this item here.");
-                                //TODO :: USE THIS FOR ADDING BONUSES TO ITEMS AND STUFF
-                            }
+                            Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
+                            itemInTargetSlot.position = items[i].position;
+                            items[i].position = newPos;
+                            owner.UpdateClientInventory();
+                            owner.UpdateStats();
                         }
                     }
                     else
                     {
                         Logger.ItemLog(items[i].data.vnum, iid, $"MOVE,{window.ToString()},{items[i].position},{newPos}");
                         items[i].position = newPos;
-                        UpdateMatrix();
                         owner.UpdateClientInventory();
                         owner.UpdateStats();
                     }
@@ -328,6 +170,11 @@ public class Inventory
                 return;
             }
         }
+    }
+
+    public bool hasSpaceForItem()
+    {
+        return (inventory_size - items.Count) > 0;
     }
 
     public void UseItemAtPosition(int pos, Item.WINDOW window)
@@ -354,7 +201,6 @@ public class Inventory
             {
                 if (items[i].count - count <= 0)
                 {
-                    UpdateMatrix();
                     items[i].window = Item.WINDOW.NONE;
                     items[i].position = 0;
 
@@ -385,7 +231,6 @@ public class Inventory
                     if (items[i].count - count <= 0)
                     {
                         remainer = count - items[i].count;
-                        UpdateMatrix();
                         items[i].window = Item.WINDOW.NONE;
                         items[i].position = 0;
                         current.Remove(items[i]);
@@ -402,7 +247,6 @@ public class Inventory
                 {
                     if (items[i].count - remainer <= 0)
                     {
-                        UpdateMatrix();
                         items[i].window = Item.WINDOW.NONE;
                         items[i].position = 0;
 
@@ -461,5 +305,27 @@ public class Inventory
                 return true;
         }
         return false;
+    }
+
+    private static async Task<Item[]> getPlayerInventoryFromDatabase(int pid)
+    {
+        List<Item> list = new List<Item>();
+        List<MySqlParameter> _params = new List<MySqlParameter>()
+        {
+            MySQL_Param.Parameter("?pid", pid),
+
+        };
+        DataTable rows = await Server.DB.QueryAsync("SELECT * FROM [[player]].item WHERE `owner`=?pid AND (`window`='INVENTORY' OR `window`='EQUIPABLES')", _params);
+        for (int i = 0; i < rows.Rows.Count; i++)
+        {
+            long.TryParse(rows.Rows[i]["id"].ToString(), out long iid);
+            Int32.TryParse(rows.Rows[i]["vnum"].ToString(), out int vnum);
+            Item.WINDOW window = (Item.WINDOW)Enum.Parse(typeof(Item.WINDOW), rows.Rows[i]["window"].ToString());
+            Int32.TryParse(rows.Rows[i]["count"].ToString(), out int count);
+            Int32.TryParse(rows.Rows[i]["pos"].ToString(), out int pos);
+            Item nItem = new Item(pid, window, pos, Config.Items[vnum], iid, count);
+            list.Add(nItem);
+        }
+        return list.ToArray();
     }
 }

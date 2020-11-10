@@ -8,40 +8,24 @@ using System.Threading.Tasks;
 
 public class Player
 {
-    public int session;
     public string name;
-    public int pid;
-    public int aid;
-    public int map;
-    public int level;
-    public float hp;
-    public float mana;
-    public PLAYER_SEXES sex;
-    public PLAYER_RACES race;
-    public Vector3 pos;
-    public int heading;
+    public int unusedAttributePoints = 0;
+    public PlayerData data;
     public Client client;
     public PlayerStats stats;
     public Inventory inventory { get; private set; }
-    public bool attacking;
     private bool warping = false;
     private Item itemEquipped;
+    public bool playerChanged = false;
 
-    public Player(Client _client, int _session, int _pid, int _aid, int _level, PLAYER_SEXES _sex, PLAYER_RACES _race, Vector3 _pos, int _heading, PlayerStats _stats)
+    public Player(Client _client, PlayerData pData, PlayerStats _stats)
     {
         this.client = _client;
-        this.session = _session;
-        this.pid = _pid;
-        this.aid = _aid;
-        this.sex = _sex;
-        this.race = _race;
+        this.data = pData;
         this.stats = _stats;
-        this.level = _level;
-        this.pos = _pos;
-        this.heading = _heading;
-        this.hp = 1000000000f;
-        this.mana = 100f;
+        this.unusedAttributePoints = calcUnusedAttributePoints();
     }
+
     ~Player() { }
 
     public void Update()
@@ -50,6 +34,10 @@ public class Player
         {
             doHealthRegen();
         }
+
+        if(playerChanged)
+            UpdatePlayerToClient();
+        playerChanged = false;
     }
 
     private void doHealthRegen()
@@ -71,12 +59,12 @@ public class Player
         {
             List<MySqlParameter> _params = new List<MySqlParameter>()
             {
-                MySQL_Param.Parameter("?session", session),
-                MySQL_Param.Parameter("?aid", aid),
-                MySQL_Param.Parameter("?pid", pid),
+                MySQL_Param.Parameter("?session", data.sid),
+                MySQL_Param.Parameter("?aid", data.aid),
+                MySQL_Param.Parameter("?pid", data.pid),
             };
             await Server.DB.QueryAsync("DELETE FROM [[player]].sessions WHERE `session`=?session AND `pid`=?pid AND `aid`=?aid LIMIT 1", _params);
-            Logger.Syslog($"Player with session id {session} dumped and destroyed.");
+            Logger.Syslog($"Player with session id {data.sid} dumped and destroyed.");
         }
     }
 
@@ -84,15 +72,20 @@ public class Player
     {
         List<MySqlParameter> dumpParams = new List<MySqlParameter>()
         {
-            MySQL_Param.Parameter("?pid", pid),
-            MySQL_Param.Parameter("?level", level),
-            MySQL_Param.Parameter("?x", this.pos.X.ToString("0.000")),
-            MySQL_Param.Parameter("?y", this.pos.Y.ToString("0.000")),
-            MySQL_Param.Parameter("?z", this.pos.Z.ToString("0.000")),
-            MySQL_Param.Parameter("?h", this.heading),
-            MySQL_Param.Parameter("?map", this.map),
+            MySQL_Param.Parameter("?pid", data.pid),
+            MySQL_Param.Parameter("?level", data.level),
+            MySQL_Param.Parameter("?exp", data.exp),
+            MySQL_Param.Parameter("?vit", data.vit),
+            MySQL_Param.Parameter("?str", data.str),
+            MySQL_Param.Parameter("?int", data._int),
+            MySQL_Param.Parameter("?dex", data.dex),
+            MySQL_Param.Parameter("?x", this.data.pos.X.ToString("0.000")),
+            MySQL_Param.Parameter("?y", this.data.pos.Y.ToString("0.000")),
+            MySQL_Param.Parameter("?z", this.data.pos.Z.ToString("0.000")),
+            MySQL_Param.Parameter("?h", this.data.heading),
+            MySQL_Param.Parameter("?map", this.data.map),
         };
-        await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map WHERE `id`=?pid LIMIT 1", dumpParams);
+        await Server.DB.QueryAsync("UPDATE [[player]].player SET `level`=?level, `exp`=?exp, `vit`=?vit, `str`=?str, `int`=?int, `dex`=?dex, `x`=?x, `y`=?y, `z`=?z, `h`=?h, `map`=?map WHERE `id`=?pid LIMIT 1", dumpParams);
         return 0;
     }
 
@@ -116,10 +109,11 @@ public class Player
 
     public void receiveDamage(float damage)
     {
-        this.hp -= damage;
-        if (this.hp <= 0)
+        this.data.hp -= damage;
+        if (this.data.hp <= 0)
             die();
 
+        playerChanged = true;
         sendDamageSignalToClient((int)damage);
     }
 
@@ -141,20 +135,20 @@ public class Player
     private void respawn()
     {
         UpdateStats();
-        this.hp = this.stats.maxHp / 4;
-        this.mana = this.stats.maxMana / 4.5f;
+        this.data.hp = this.data.maxHp / 4;
+        this.data.mana = this.data.maxMana / 4.5f;
     }
 
     public bool isAlive()
     {
-        return this.hp > 0f;
+        return this.data.hp > 0f;
     }
 
     public void UpdatePosition(Vector3 newPos, int newHeading, bool attacking)
     {
-        this.pos = newPos;
-        this.heading = newHeading;
-        this.attacking = attacking;
+        this.data.pos = newPos;
+        this.data.heading = newHeading;
+        this.data.attacking = attacking;
     }
 
     public void UpdateClientInventory()
@@ -168,15 +162,25 @@ public class Player
         }
     }
 
+    public void UpdatePlayerToClient()
+    {
+        using (Packet pck = new Packet((int)Packet.ServerPackets.updatePlayer))
+        {
+            pck.Write(data);
+            Core.SendTCPData(client.cid, pck);
+        }
+    }
+
     public void UpdateStats()
     {
         float moveSpeed = 1.0f;
         float attackSpeed = 1.0f;
         float pAttack = 1.0f;
         float mAttack = 1.0f;
-        float mHp = 100.0f;
-        float mMn = 100.0f;
+        float mHp = 10.0f;
+        float mMn = 10.0f;
         bool foundWeapon = false;
+        playerChanged = true;
 
         for (int i = 0; i < inventory.items.Count; i++)
         {
@@ -251,8 +255,8 @@ public class Player
         this.stats.attackSpeed = attackSpeed;
         this.stats.pAttack = pAttack;
         this.stats.mAttack = mAttack;
-        this.stats.maxHp = mHp;
-        this.stats.maxMana = mMn;
+        this.data.maxHp = mHp;
+        this.data.maxMana = mMn;
     }
 
     public float calcHitDamage(float pDef, float mDef)
@@ -261,5 +265,15 @@ public class Player
             return 0;
 
         return (itemEquipped.data.pDamage - pDef) + (itemEquipped.data.mDamage - mDef);
+    }
+
+    private int calcUnusedAttributePoints()
+    {
+        int totalAttributes = data.level * 5;
+        totalAttributes -= data.vit;
+        totalAttributes -= data.str;
+        totalAttributes -= data._int;
+        totalAttributes -= data.dex;
+        return totalAttributes;
     }
 }

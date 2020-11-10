@@ -40,7 +40,6 @@ public class ItemData
     public string name;
     public int level;
     public PLAYER_RACES[] races;
-    public int size;
     public bool stacks;
     public ITEM_TYPES type;
     public ITEM_SUB_TYPES sub_type;
@@ -61,13 +60,12 @@ public class ItemData
     public float pDamage;
     public float mDamage;
 
-    public ItemData(int id, string name, int level, PLAYER_RACES[] races, int size, bool _stacks, ITEM_TYPES type, ITEM_SUB_TYPES sub_type, BONUS_TYPE bonus_type0, float bonus_value0, BONUS_TYPE bonus_type1, float bonus_value1, BONUS_TYPE bonus_type2, float bonus_value2, BONUS_TYPE bonus_type3, float bonus_value3, BONUS_TYPE bonus_type4, float bonus_value4, BONUS_TYPE bonus_type5, float bonus_value5)
+    public ItemData(int id, string name, int level, PLAYER_RACES[] races, bool _stacks, ITEM_TYPES type, ITEM_SUB_TYPES sub_type, BONUS_TYPE bonus_type0, float bonus_value0, BONUS_TYPE bonus_type1, float bonus_value1, BONUS_TYPE bonus_type2, float bonus_value2, BONUS_TYPE bonus_type3, float bonus_value3, BONUS_TYPE bonus_type4, float bonus_value4, BONUS_TYPE bonus_type5, float bonus_value5)
     {
         this.vnum = id;
         this.name = name;
         this.level = level;
         this.races = races;
-        this.size = size;
         this.stacks = _stacks;
         this.type = type;
         this.sub_type = sub_type;

@@ -19,6 +19,7 @@ public class Packet : IDisposable
 		mobsInMap,
 		chatCb,
 		updateInventory,
+		updatePlayer,
 		damageSignal,
 		reconnectWarp
 	}
@@ -222,6 +223,11 @@ public class Packet : IDisposable
 		Write(data.sid);
 		Write(data.name);
 		Write(data.level);
+		Write(data.exp);
+		Write(data.vit);
+		Write(data.str);
+		Write(data._int);
+		Write(data.dex);
 		Write(data.map);
 		Write((int)data.sex);
 		Write((int)data.race);
@@ -234,10 +240,10 @@ public class Packet : IDisposable
 		Write(data.stats.pAttack);
 		Write(data.stats.mAttack);
 		Write(data.attacking);
+		Write(data.maxHp);
+		Write(data.maxMana);
 		Write(data.hp);
 		Write(data.mana);
-		Write(data.stats.maxHp);
-		Write(data.stats.maxMana);
 		Write(data.stats.pDefense);
 		Write(data.stats.mDefense);
 	}
@@ -250,7 +256,7 @@ public class Packet : IDisposable
 		Write(data.data.stats.maxHp);
 		Write(data.position);
 		if (data.focus != null)
-			Write(data.focus.pid);
+			Write(data.focus.data.pid);
 		else
 			Write(0);
 		Write(data.gid);
@@ -490,8 +496,6 @@ public class Packet : IDisposable
 		try
 		{
 			int pid = ReadInt();
-			int aid = ReadInt();
-			int sid = ReadInt();
 			string name = ReadString();
 			int level = ReadInt();
 			int map = ReadInt();
@@ -503,18 +507,14 @@ public class Packet : IDisposable
 			int heading = ReadInt();
 			float attSpeed = ReadFloat();
 			float movSpeed = ReadFloat();
-			float pAttack = ReadFloat();
-			float mAttack = ReadFloat();
 			bool attacking = ReadBool();
 			float hp = ReadFloat();
 			float mana = ReadFloat();
 			float maxHp = ReadFloat();
 			float maxMana = ReadFloat();
-			float pDef = ReadFloat();
-			float mDef = ReadFloat();
 
-			PlayerStats stats = new PlayerStats(movSpeed, attSpeed, pAttack, mAttack, maxHp, maxMana, pDef, mDef);
-			return new PlayerData(pid, aid, sid, name, level, map, sex, race, new System.Numerics.Vector3(x, y, z), heading, stats, attacking, hp, mana);
+			PlayerStats stats = new PlayerStats();
+			return new PlayerData(pid, name, level, map, sex, race, new Vector3(x, y, z), heading, stats, attacking, 0,0,maxHp,hp,mana,maxMana);
 		}
 		catch
 		{

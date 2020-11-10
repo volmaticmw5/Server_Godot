@@ -168,7 +168,7 @@ public class Map
             {
                 for (int i = 0; i < mobs.Count; i++)
                 {
-                    if (Vector3.Distance(mobs[i].position, client.Value.player.pos) > Config.ViewDistance)
+                    if (Vector3.Distance(mobs[i].position, client.Value.player.data.pos) > Config.ViewDistance)
                         continue;
 
                     data_mobs.Add(mobs[i]);
@@ -206,27 +206,29 @@ public class Map
         {
             if (!isPlayerValid(other.Value))
                 continue;
-            if (other.Value.player.pid == targetClient.player.pid)
+            if (other.Value.player.data.pid == targetClient.player.data.pid)
                 continue;
 
-            if (Vector3.Distance(targetClient.player.pos, other.Value.player.pos) < Config.ViewDistance)
+            if (Vector3.Distance(targetClient.player.data.pos, other.Value.player.data.pos) < Config.ViewDistance)
             {
                 Player otherPlayer = other.Value.player;
                 PlayerData otherPlayerData = new PlayerData(
-                    otherPlayer.pid, 
-                    otherPlayer.aid, 
-                    otherPlayer.session, 
-                    otherPlayer.name, 
-                    otherPlayer.level, 
-                    otherPlayer.map, 
-                    otherPlayer.sex, 
-                    otherPlayer.race, 
-                    otherPlayer.pos,
-                    otherPlayer.heading,
-                    otherPlayer.stats,
-                    otherPlayer.attacking,
-                    otherPlayer.hp,
-                    otherPlayer.mana);
+                    otherPlayer.data.pid, 
+                    otherPlayer.data.name, 
+                    otherPlayer.data.level, 
+                    otherPlayer.data.map, 
+                    otherPlayer.data.sex, 
+                    otherPlayer.data.race, 
+                    otherPlayer.data.pos,
+                    otherPlayer.data.heading,
+                    otherPlayer.data.stats,
+                    otherPlayer.data.attacking,
+                    otherPlayer.data.aid,
+                    otherPlayer.data.sid,
+                    otherPlayer.data.hp,
+                    otherPlayer.data.mana,
+                    otherPlayer.data.maxHp,
+                    otherPlayer.data.maxMana);
 
                 data.Add(otherPlayerData);
             }
@@ -252,7 +254,7 @@ public class Map
     {
         if (client.player == null)
             return false;
-        if (client.player.map != this.id)
+        if (client.player.data.map != this.id)
             return false;
 
         return true;

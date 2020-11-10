@@ -24,7 +24,7 @@ class PlayerManager
         int sid = packet.ReadInt();
 		PlayerData pdata = packet.ReadPlayerData();
 		bool attacking = packet.ReadBool();
-        
+
         if (Security.Validate(cid, fromClient, sid))
             Server.the_core.Clients[fromClient].player.UpdatePosition(pdata.pos, pdata.heading, attacking);
     }
@@ -86,6 +86,11 @@ class PlayerManager
 			Int32.TryParse(pResult.Rows[0]["sex"].ToString(), out int sex);
 			Int32.TryParse(pResult.Rows[0]["race"].ToString(), out int race);
 			Int32.TryParse(pResult.Rows[0]["level"].ToString(), out int level);
+			Int32.TryParse(pResult.Rows[0]["exp"].ToString(), out int exp);
+			Int32.TryParse(pResult.Rows[0]["vit"].ToString(), out int vit);
+			Int32.TryParse(pResult.Rows[0]["str"].ToString(), out int str);
+			Int32.TryParse(pResult.Rows[0]["int"].ToString(), out int inte);
+			Int32.TryParse(pResult.Rows[0]["dex"].ToString(), out int dex);
 			float.TryParse(pResult.Rows[0]["x"].ToString(), out float x);
 			float.TryParse(pResult.Rows[0]["y"].ToString(), out float y);
 			float.TryParse(pResult.Rows[0]["z"].ToString(), out float z);
@@ -93,7 +98,8 @@ class PlayerManager
 			Int32.TryParse(pResult.Rows[0]["h"].ToString(), out int heading);
 
 			PlayerStats stats = new PlayerStats();
-			Player player = new Player(Server.the_core.Clients[client], sid, pid, aid, level, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats);
+			PlayerData pdata = new PlayerData(pid, "", level, 0, (PLAYER_SEXES)sex, (PLAYER_RACES)race, pos, heading, stats, false, aid, sid, 10f, 10f, 10f, 10f, exp, vit, str, inte, dex);
+			Player player = new Player(Server.the_core.Clients[client], pdata, stats);
 			Inventory inventory = await Inventory.BuildInventory(player);
 			player.AssignInventory(inventory);
 			Server.the_core.Clients[client].setPlayer(player);
@@ -129,16 +135,21 @@ class PlayerManager
 		Int32.TryParse(rows.Rows[0]["sex"].ToString(), out int sex);
 		Int32.TryParse(rows.Rows[0]["race"].ToString(), out int race);
 		Int32.TryParse(rows.Rows[0]["level"].ToString(), out int level);
+		Int32.TryParse(rows.Rows[0]["exp"].ToString(), out int exp);
+		Int32.TryParse(rows.Rows[0]["vit"].ToString(), out int vit);
+		Int32.TryParse(rows.Rows[0]["str"].ToString(), out int str);
+		Int32.TryParse(rows.Rows[0]["int"].ToString(), out int _int);
+		Int32.TryParse(rows.Rows[0]["dex"].ToString(), out int dex);
 
 		PlayerStats stats = new PlayerStats();
-		PlayerData nData = new PlayerData(pid, aid, sid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false, stats.maxHp, stats.maxMana);
+		PlayerData nData = new PlayerData(pid, name, level, map, (PLAYER_SEXES)sex, (PLAYER_RACES)race, new Vector3(x, y, z), heading, stats, false, aid, sid, 100f, 100f, exp,vit,str,_int,dex);
 		return nData;
 	}
 
 	private static void AssignPlayerDataToClient(int client, PlayerData data)
 	{
 		Server.the_core.Clients[client].player.name = data.name;
-		Server.the_core.Clients[client].player.map = data.map;
+		Server.the_core.Clients[client].player.data.map = data.map;
 		Server.the_core.Clients[client].player.UpdatePosition(data.pos, data.heading, false);
 	}
 

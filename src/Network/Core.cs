@@ -29,7 +29,7 @@ class Core
 		for (int i = 1; i < Clients.Count; i++)
 		{
 			if (Clients[i].player != null)
-				if (Clients[i].player.pid == pid)
+				if (Clients[i].player.data.pid == pid)
 					return i;
 		}
 		return -1;

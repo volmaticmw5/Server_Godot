@@ -144,13 +144,13 @@ public class TCP
         if (client.player != null)
         {
             // tell mobs that have the player has target to forget about it
-            Map playerMap = MapManager.getMapById(client.player.map);
+            Map playerMap = MapManager.getMapById(client.player.data.map);
             for (int m = 0; m < playerMap.mobs.Count; m++)
             {
                 if (playerMap.mobs[m].focus == client.player)
                     playerMap.mobs[m].ClearFocus();
             }
-            Logger.PlayerLog(client.player.pid, "LOGOUT");
+            Logger.PlayerLog(client.player.data.pid, "LOGOUT");
 
             client.player.Dispose();
             client.player = null;

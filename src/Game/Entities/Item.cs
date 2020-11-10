@@ -99,7 +99,6 @@ public class Item
         if (this.data.type == ITEM_TYPES.ARMOR)
             this.position = 2;
 
-        Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
         Server.the_core.Clients[cid].player.UpdateClientInventory();
         Server.the_core.Clients[cid].player.UpdateStats();
         Logger.ItemLog(this.data.vnum, this.iid, "EQUIP");
@@ -108,7 +107,7 @@ public class Item
     private void dequip()
     {
         int cid = Server.the_core.getClientFromPid(ownerPid);
-        if(!Server.the_core.Clients[cid].player.inventory.canFit(this.data.vnum))
+        if(!Server.the_core.Clients[cid].player.inventory.hasSpaceForItem())
         {
             ChatHandler.sendLocalChatMessage(cid, "You have no free space for this.");
             return;
@@ -116,7 +115,6 @@ public class Item
 
         this.window = WINDOW.INVENTORY;
         this.position = Server.the_core.Clients[cid].player.inventory.getAppropriateWindowPositionForItem(window, this.data.vnum);
-        Server.the_core.Clients[cid].player.inventory.UpdateMatrix();
         Server.the_core.Clients[cid].player.UpdateClientInventory();
         Server.the_core.Clients[cid].player.UpdateStats();
         Logger.ItemLog(this.data.vnum, this.iid, "DEQUIP");

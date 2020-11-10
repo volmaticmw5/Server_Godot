@@ -286,27 +286,26 @@ class Config
                         races.Add((PLAYER_RACES)Enum.Parse(typeof(PLAYER_RACES), races_string[r]));
                 }
 
-                Int32.TryParse(line_contents[4].ToString(), out int size);
-                Int32.TryParse(line_contents[5].ToString(), out int _stacks);
+                Int32.TryParse(line_contents[4].ToString(), out int _stacks);
                 bool stacks = false;
                 if (_stacks == 1)
                     stacks = true;
-                ITEM_TYPES type = (ITEM_TYPES)Enum.Parse(typeof(ITEM_TYPES), line_contents[6]);
-                ITEM_SUB_TYPES sub_type = (ITEM_SUB_TYPES)Enum.Parse(typeof(ITEM_SUB_TYPES), line_contents[7]);
-                BONUS_TYPE bonus_type0 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[8]);
-                float.TryParse(line_contents[9].ToString(), out float bonus_value0);
-                BONUS_TYPE bonus_type1 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[10]);
-                float.TryParse(line_contents[11].ToString(), out float bonus_value1);
-                BONUS_TYPE bonus_type2 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[12]);
-                float.TryParse(line_contents[13].ToString(), out float bonus_value2);
-                BONUS_TYPE bonus_type3 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[14]);
-                float.TryParse(line_contents[15].ToString(), out float bonus_value3);
-                BONUS_TYPE bonus_type4 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[16]);
-                float.TryParse(line_contents[17].ToString(), out float bonus_value4);
-                BONUS_TYPE bonus_type5 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[18]);
-                float.TryParse(line_contents[19].ToString(), out float bonus_value5);
+                ITEM_TYPES type = (ITEM_TYPES)Enum.Parse(typeof(ITEM_TYPES), line_contents[5]);
+                ITEM_SUB_TYPES sub_type = (ITEM_SUB_TYPES)Enum.Parse(typeof(ITEM_SUB_TYPES), line_contents[6]);
+                BONUS_TYPE bonus_type0 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[7]);
+                float.TryParse(line_contents[8].ToString(), out float bonus_value0);
+                BONUS_TYPE bonus_type1 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[9]);
+                float.TryParse(line_contents[10].ToString(), out float bonus_value1);
+                BONUS_TYPE bonus_type2 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[11]);
+                float.TryParse(line_contents[12].ToString(), out float bonus_value2);
+                BONUS_TYPE bonus_type3 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[13]);
+                float.TryParse(line_contents[14].ToString(), out float bonus_value3);
+                BONUS_TYPE bonus_type4 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[15]);
+                float.TryParse(line_contents[16].ToString(), out float bonus_value4);
+                BONUS_TYPE bonus_type5 = (BONUS_TYPE)Enum.Parse(typeof(BONUS_TYPE), line_contents[17]);
+                float.TryParse(line_contents[18].ToString(), out float bonus_value5);
 
-                ItemData iData = new ItemData(vnum, name, level, races.ToArray(), size, stacks, type, sub_type, bonus_type0, bonus_value0, bonus_type1, bonus_value1, bonus_type2, bonus_value2, bonus_type3, bonus_value3, bonus_type4, bonus_value4, bonus_type5, bonus_value5);
+                ItemData iData = new ItemData(vnum, name, level, races.ToArray(), stacks, type, sub_type, bonus_type0, bonus_value0, bonus_type1, bonus_value1, bonus_type2, bonus_value2, bonus_type3, bonus_value3, bonus_type4, bonus_value4, bonus_type5, bonus_value5);
                 items[vnum] = iData;
             }
 

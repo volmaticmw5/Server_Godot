@@ -35,7 +35,7 @@ public class ItemManager
 
         if(Config.Items[vnum].stacks)
         {
-            if (!player.inventory.canFit(vnum))
+            if (!player.inventory.hasSpaceForItem())
                 return -1;
 
             if (!player.inventory.HasItem(vnum))
@@ -56,7 +56,7 @@ public class ItemManager
         {
             for (int i = 0; i < count; i++)
             {
-                if (!player.inventory.canFit(vnum))
+                if (!player.inventory.hasSpaceForItem())
                     return -1;
                 player.inventory.AddItemToInventory(vnum, 1, window);
             }
@@ -88,7 +88,7 @@ public class ItemManager
         Item.WINDOW window = (Item.WINDOW)packet.ReadInt();
         if (!Security.Validate(cid, fromClient, sid))
             return;
-        Server.the_core.Clients[cid].player.inventory.SwapItemPosition(iid, newPos, window);
+        Server.the_core.Clients[cid].player.inventory.ChangeItemPosition(iid, newPos, window);
     }
 
     public static void RemoveItemFromPlayer(Player player, long iid, int count)
@@ -118,7 +118,7 @@ public class ItemManager
         if (!Security.Validate(cid, fromClient, sid))
             return;
 
-        Map targetMap = MapManager.getMapById(Server.the_core.Clients[cid].player.map);
+        Map targetMap = MapManager.getMapById(Server.the_core.Clients[cid].player.data.map);
         Mob targetMob = targetMap.getMobByMid(mid);
         if (targetMob == null)
             return;
